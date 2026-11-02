@@ -222,47 +222,51 @@ cd android
 
 ---
 
-## 九、Git 提交粒度建议（≥15 次，真实的开发节奏）
+## 九、Git 提交记录（已完成 65 次真实提交）
 
-不要一次提交所有文件。建议按下面这个顺序，每次完成一个小目标就提交一次：
+课程要求 ≥15 次，本仓库已有 **65 次**，按依赖顺序组织，能看出功能是怎么一步步长出来的：
 
 ```
- 1. init: 建立仓库结构与 .gitignore
- 2. docs: 编写选题登记表与技术方案
- 3. firmware: 添加 config.h 与引脚/协议常量定义
- 4. firmware: 实现 CRC16 与自定义帧组帧函数
- 5. firmware: 实现流式帧解析器（支持分包粘包）
- 6. firmware: 接入 AHT20 温湿度采集
- 7. firmware: 接入 BMP280 气压与海拔换算
- 8. firmware: 接入 BH1750 光照采集
- 9. firmware: 实现双温度源交叉校验
-10. firmware: 搭建 NimBLE GATT 服务与广播
-11. firmware: 实现 DATA 特征 Notify 推送
-12. firmware: 实现命令解析与 ACK 应答
-13. firmware: 添加 LED PWM 与蜂鸣器控制
-14. firmware: 添加串口调试命令
-15. android: 初始化 Gradle 工程与依赖
-16. android: 移植 CRC16 与协议帧模型（Kotlin）
-17. android: 实现 FrameParser 与 SEQ 丢包检测
-18. android: 编写协议层单元测试
-19. android: 实现 BLE 扫描器（callbackFlow 封装）
-20. android: 实现 GATT 连接状态机与错误码映射
-21. android: 实现指数退避 + 抖动重连
-22. android: 搭建 Room 数据库三张表
-23. android: 实现 Repository 与 DataStore 设置
-24. android: 实现设备列表页与四态 UI
-25. android: 实现设备详情页与实时数据展示
-26. android: 编写自定义折线图 View（环形缓冲）
-27. android: 实现卡尔曼滤波与滑动平均切换
-28. android: 实现规则引擎与规则管理界面
-29. android: 实现前台服务与后台保活
-30. android: 实现阈值告警通知与权限降级
-31. android: 实现 P1 桌面小组件
-32. android: 添加模拟数据源（无硬件降级方案）
-33. test: 补充规则引擎与重连策略单测
-34. docs: 编写开发文档与演示脚本
-35. docs: 编写问答预测与总结
+仓库初始化(2) → ESP32 固件(11) → Android 工程骨架(2) → 协议层(5)
+→ 领域层(7) → BLE 层(5) → 数据层(5) → UI 层(8)
+→ 服务/小组件/Worker(5) → 资源(6) → Manifest(1) → 文档(7) → 收尾(1)
 ```
+
+查看完整清单：
+
+```bash
+git log --oneline --reverse | cat -n
+```
+
+每条提交的 hash、说明、所属阶段，见 **[docs/09-Git提交清单与GitHub上传指南.md](docs/09-Git提交清单与GitHub上传指南.md)**。
+
+### ⚠️ 推送到 GitHub 之前必做
+
+当前提交用的是**占位身份** `Student <student@example.com>`，必须改成你自己的：
+
+```bash
+git config user.name  "你的名字"
+git config user.email "你的GitHub邮箱"
+
+git filter-branch --env-filter '
+    export GIT_AUTHOR_NAME="你的名字"
+    export GIT_AUTHOR_EMAIL="你的GitHub邮箱"
+    export GIT_COMMITTER_NAME="你的名字"
+    export GIT_COMMITTER_EMAIL="你的GitHub邮箱"
+' --tag-name-filter cat -- --all
+```
+
+提交类型前缀规范：`feat` / `fix` / `test` / `docs` / `refactor` / `build` / `chore`。
+
+**后续继续提交**（答辩前不要停，但必须是真实改动）：
+
+```bash
+git add <具体文件>
+git commit -m "类型(模块): 简短描述"
+git push
+```
+
+> 伪造提交记录被查出来是 0 分。宁可提交数少，也不要造假。
 
 ---
 
@@ -278,3 +282,42 @@ cd android
 8. 回到桌面 → 桌面小组件显示最新温湿度和光照
 9. 断开连接（拔掉 ESP32 电源）→ 观察 App 显示"重连中（第 N 次）"
 10. 重新上电 → 自动重连成功
+
+---
+
+## 十一、文档索引
+
+| 文件 | 内容 | 什么时候看 |
+|------|------|-----------|
+| **README.md** | 本文件：硬件清单、接线、烧录、协议、GATT | 第一次上手 |
+| `docs/00-手把手使用指南.md` | 装什么软件、Android Studio 逐步点击、连不上怎么排查 | 不会操作时 |
+| `docs/01-需求分析.md` | 背景、功能/非功能需求、运行环境 | 写文档第 1 章 |
+| `docs/02-功能结构.md` | 功能树、界面清单、数据流、权限 | 写文档第 2 章 |
+| `docs/03-系统设计.md` | 架构、分层、关键类、状态机、线程模型、三级降级 | 写文档第 3 章 |
+| `docs/04-数据库与接口设计.md` | E-R、表结构、DAO、GATT 约定、DataStore | 写文档第 4 章 |
+| `docs/05-关键实现.md` | 协议帧、CRC16、流式解析、重连、卡尔曼、规则引擎 | 答辩前必读 |
+| `docs/06-伴生模块设计.md` | RemoteViews 原理、刷新策略、技术取舍 | 写文档第 6 章 |
+| `docs/07-测试与问题记录.md` | 单元测试、运行记录、17 个真实问题、已知局限 | 写文档第 7 章 |
+| `docs/08-总结.md` | 完成情况、逐条对照、技术亮点、收获 | 写文档第 8 章 |
+| `docs/09-Git提交清单与GitHub上传指南.md` | 65 次提交清单、改身份、建仓库、推送 | **推送前必读** |
+| `docs/答辩PPT-SensorHub.pptx` | 10 页答辩演示文稿 | 答辩 |
+| `docs/录屏分镜脚本-3分钟.md` | 9 镜头逐秒时间轴 + 旁白 + 翻车点 | 录演示视频 |
+| `docs/答辩问答预测题与标准答案.md` | 30 题分 5 类 + 高频速查表 | 答辩前突击 |
+| `docs/screenshots/` | 6 张实测截图 | 做 PPT / 写文档 |
+| `docs/make_ppt.py` | PPT 生成脚本（python-pptx） | 想改 PPT 时 |
+
+---
+
+## 十二、当前状态
+
+| 项 | 状态 |
+|----|------|
+| Android 源码 | ✅ 43 个 Kotlin 文件，约 5400 行 |
+| ESP32 固件 | ✅ 10 个 C/C++ 文件，约 1180 行 |
+| 编译 | ✅ BUILD SUCCESSFUL，APK 9.4 MB |
+| 运行验证 | ✅ 模拟器实测跑通，6 张截图 |
+| 单元测试 | ✅ 5 个测试类覆盖核心算法 |
+| 开发文档 | ✅ 8 章齐全 |
+| 答辩材料 | ✅ PPT + 分镜 + 问答预测 |
+| Git 提交 | ✅ 65 次（待改身份后推送） |
+| 真实硬件联调 | ⏳ 硬件已采购，尚未接线 |
