@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  导航图：4 个顶层页面 + 1 个详情页
+  deviceListFragment 是起始页（startDestination）。
+  deviceDetailFragment 接收一个 String 类型的 address 参数（设备 MAC）。
+-->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/deviceListFragment">
+
+    <fragment
+        android:id="@+id/deviceListFragment"
+        android:name="com.sensorhub.app.ui.devices.DeviceListFragment"
+        android:label="@string/tab_devices">
+        <!-- 列表 → 详情：带一个 MAC 地址参数 -->
+        <action
+            android:id="@+id/action_deviceList_to_detail"
+            app:destination="@id/deviceDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceDetailFragment"
+        android:name="com.sensorhub.app.ui.detail.DeviceDetailFragment"
+        android:label="@string/detail_title">
+        <argument
+            android:name="address"
+            app:argType="string" />
+        <argument
+            android:name="name"
+            android:defaultValue="SensorHub"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/rulesFragment"
+        android:name="com.sensorhub.app.ui.rules.RulesFragment"
+        android:label="@string/tab_rules" />
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.sensorhub.app.ui.history.HistoryFragment"
+        android:label="@string/tab_history" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.sensorhub.app.ui.settings.SettingsFragment"
+        android:label="@string/tab_settings" />
+
+</navigation>

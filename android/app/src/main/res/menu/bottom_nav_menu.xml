@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 底部导航菜单。id 必须和 nav_graph.xml 里对应 destination 的 id 完全一致，
+     否则 BottomNavigationView 与 NavController 联动会失效（点了不跳转）。 -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/deviceListFragment"
+        android:icon="@drawable/ic_bluetooth"
+        android:title="@string/tab_devices" />
+    <item
+        android:id="@+id/rulesFragment"
+        android:icon="@drawable/ic_warning"
+        android:title="@string/tab_rules" />
+    <item
+        android:id="@+id/historyFragment"
+        android:icon="@android:drawable/ic_menu_recent_history"
+        android:title="@string/tab_history" />
+    <item
+        android:id="@+id/settingsFragment"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="@string/tab_settings" />
+</menu>
