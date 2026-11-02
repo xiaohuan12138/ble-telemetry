@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      ===================================================================
+      权限声明：Android 12（API 31）起蓝牙权限被拆成三个，这是本项目
+      "权限降级方案"的技术根源，答辩大概率会问到。
+      ===================================================================
+    -->
+
+    <!-- BLUETOOTH_SCAN：扫描周边设备。
+         带 neverForLocation 标记 = "我扫蓝牙不是为了定位"，
+         这样系统不会再向你索要 ACCESS_FINE_LOCATION 权限。
+         这是把"要两个权限"降到"只要一个"的关键一行。 -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="31" />
+
+    <!-- BLUETOOTH_CONNECT：与已配对/已发现的设备建立连接并通信 -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- 旧版权限：Android 11 及以下仍需要。maxSdkVersion 表示 30 以上不再申请 -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+
+    <!-- 位置权限：老系统（≤11）扫 BLE 必须要有，否则 ScanResult 永远是空的。
+         这是"历史包袱"，代码里做了运行时判断：31+ 就不再申请。 -->
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:maxSdkVersion="30" />
+
+    <!-- 前台服务：让 App 退到后台还能保持 BLE 连接 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+
+    <!-- 通知：Android 13 起需要单独申请，否则告警通知发不出来 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- 声明这是 BLE 应用。Google Play 会据此过滤不支持 BLE 的设备，
+         同时在 Android 12+ 上影响系统对蓝牙权限的提示文案 -->
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" />
+
+    <application
+        android:name=".SensorHubApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SensorHub"
+        android:usesCleartextTraffic="false"
+        tools:targetApi="31">
+
+        <!-- 主界面：单 Activity + 多 Fragment 架构 -->
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 前台服务：退到后台也要维持连接 + 持续告警
+             foregroundServiceType="connectedDevice" 是 Android 14 的强制要求 -->
+        <service
+            android:name=".service.SensorHubService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <!-- 桌面小组件（伴生模块 P1）
+             APPWIDGET_UPDATE 是系统广播：桌面需要刷新小组件时发出 -->
+        <receiver
+            android:name=".widget.SensorWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/sensor_widget_info" />
+        </receiver>
+
+    </application>
+
+</manifest>
