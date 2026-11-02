@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SensorHub</string>
+    <string name="app_name_full">传感中枢 SensorHub</string>
+
+    <!-- 底部导航 -->
+    <string name="tab_devices">设备</string>
+    <string name="tab_rules">规则</string>
+    <string name="tab_history">历史</string>
+    <string name="tab_settings">设置</string>
+
+    <!-- 设备列表 -->
+    <string name="devices_title">附近的传感节点</string>
+    <string name="devices_empty">还没扫描到设备\n点上面的按钮开始扫描</string>
+    <string name="devices_scanning">正在扫描…</string>
+    <string name="devices_error">扫描失败：%1$s</string>
+    <string name="btn_start_scan">开始扫描</string>
+    <string name="btn_stop_scan">停止扫描</string>
+    <string name="btn_retry">重试</string>
+    <string name="permission_required">需要蓝牙权限才能扫描设备</string>
+    <string name="permission_denied_hint">你拒绝了蓝牙权限，可以手动输入 MAC 地址直连</string>
+    <string name="rssi_label">信号 %1$d dBm</string>
+
+    <!-- 设备详情 -->
+    <string name="detail_title">实时数据与控制</string>
+    <string name="state_disconnected">未连接</string>
+    <string name="state_connecting">连接中…</string>
+    <string name="state_discovering">发现服务…</string>
+    <string name="state_ready">已连接</string>
+    <string name="state_retrying">重连中（第 %1$d 次）</string>
+    <string name="state_error">连接失败：%1$s</string>
+    <string name="btn_connect">连接</string>
+    <string name="btn_disconnect">断开</string>
+    <string name="label_temp">温度</string>
+    <string name="label_hum">湿度</string>
+    <string name="label_press">气压</string>
+    <string name="label_lux">光照</string>
+    <string name="unit_celsius">℃</string>
+    <string name="unit_percent">%</string>
+    <string name="unit_hpa">hPa</string>
+    <string name="unit_lux">lux</string>
+    <string name="label_led">LED 亮度</string>
+    <string name="label_buzzer">蜂鸣器</string>
+    <string name="btn_beep">鸣叫 300ms</string>
+    <string name="label_period">上报周期</string>
+    <string name="label_packet_loss">丢包率</string>
+    <string name="label_rssi">信号强度</string>
+    <string name="label_altitude">估算海拔</string>
+    <string name="label_filter">滤波方式</string>
+    <string name="filter_none">原始值</string>
+    <string name="filter_moving">滑动平均</string>
+    <string name="filter_kalman">卡尔曼滤波</string>
+
+    <!-- 规则 -->
+    <string name="rules_title">自动化规则</string>
+    <string name="rules_empty">还没有规则\n点右下角 + 新建一条</string>
+    <string name="rule_enabled">已启用</string>
+    <string name="rule_disabled">已停用</string>
+    <string name="btn_new_rule">新建规则</string>
+    <string name="rule_channel_temp">温度</string>
+    <string name="rule_channel_hum">湿度</string>
+    <string name="rule_channel_lux">光照</string>
+    <string name="rule_channel_press">气压</string>
+    <string name="rule_op_gt">大于</string>
+    <string name="rule_op_lt">小于</string>
+
+    <!-- 历史 -->
+    <string name="history_title">历史记录</string>
+    <string name="history_empty">暂无历史数据</string>
+    <string name="history_count">共 %1$d 条记录</string>
+    <string name="btn_clear_history">清空历史</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">设置</string>
+    <string name="set_mock_title">模拟数据源</string>
+    <string name="set_mock_summary">没有硬件时，用内置假数据跑通全流程</string>
+    <string name="set_autoconnect_title">自动重连</string>
+    <string name="set_autoconnect_summary">断开后按指数退避策略自动重连</string>
+    <string name="set_notify_title">后台告警通知</string>
+    <string name="set_notify_summary">规则触发时发送系统通知</string>
+    <string name="set_period_title">默认上报周期</string>
+    <string name="set_mac_title">手动直连 MAC</string>
+    <string name="set_mac_hint">例如 24:0A:C4:XX:XX:XX</string>
+    <string name="btn_apply">应用</string>
+
+    <!-- 小组件 -->
+    <string name="widget_desc">显示最近一次传感器读数</string>
+    <string name="widget_no_data">暂无数据</string>
+    <string name="widget_updated">更新于 %1$s</string>
+
+    <!-- 通知 -->
+    <string name="channel_service_name">蓝牙连接服务</string>
+    <string name="channel_service_desc">保持与传感节点的连接</string>
+    <string name="channel_alert_name">阈值告警</string>
+    <string name="channel_alert_desc">传感器数据超出设定范围时提醒</string>
+    <string name="notif_service_title">正在连接 %1$s</string>
+    <string name="notif_service_text">保持后台连接中</string>
+    <string name="notif_alert_title">告警：%1$s</string>
+    <string name="notif_alert_text">当前值 %1$s，阈值 %2$s</string>
+
+    <!-- 错误码文案（把 133/8/22 翻译成人话） -->
+    <string name="err_133">GATT 内部错误（133）：请重启手机蓝牙或靠近设备</string>
+    <string name="err_8">连接超时（8）：设备可能已断电或超出覆盖范围</string>
+    <string name="err_22">设备主动断开（22）：设备端重启或信号不稳定</string>
+    <string name="err_257">GATT 连接冲突：请等待上一次连接结束</string>
+    <string name="err_unknown">连接错误（%1$d）</string>
+</resources>

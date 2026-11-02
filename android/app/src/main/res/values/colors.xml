@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主色：蓝绿（技术感 + 传感主题），用 Material 500/700 两级 -->
+    <color name="primary">#FF00695C</color>
+    <color name="primary_variant">#FF004D40</color>
+    <color name="secondary">#FF0288D1</color>
+    <color name="secondary_variant">#FF01579B</color>
+
+    <!-- 语义色 -->
+    <color name="success">#FF2E7D32</color>
+    <color name="warning">#FFF9A825</color>
+    <color name="danger">#FFC62828</color>
+    <color name="disabled">#FFBDBDBD</color>
+
+    <!-- 中性色 -->
+    <color name="bg_page">#FFF5F6F8</color>
+    <color name="bg_card">#FFFFFFFF</color>
+    <color name="text_primary">#DE000000</color>
+    <color name="text_secondary">#99000000</color>
+    <color name="divider">#1F000000</color>
+
+    <!-- 四条曲线的配色：温度暖色、湿度蓝、气压紫、光照黄 -->
+    <color name="chart_temp">#FFE53935</color>
+    <color name="chart_hum">#FF1E88E5</color>
+    <color name="chart_press">#FF8E24AA</color>
+    <color name="chart_lux">#FFFDD835</color>
+    <color name="chart_grid">#1A000000</color>
+
+    <!-- 启动器图标背景 -->
+    <color name="ic_launcher_background">#FF00695C</color>
+</resources>
