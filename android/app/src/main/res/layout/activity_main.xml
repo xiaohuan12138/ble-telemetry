@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  单 Activity 架构的骨架：
+    ┌────────────────────────┐
+    │  FragmentContainerView │  ← 所有页面的舞台，由 Navigation 切换内容
+    │  (NavHostFragment)     │     权重 1 = 占满剩余空间
+    ├────────────────────────┤
+    │  BottomNavigationView  │  ← 底部四个 Tab
+    └────────────────────────┘
+  为什么用单 Activity？
+    1) Fragment 之间传数据用 SafeArgs，类型安全
+    2) 共享 ViewModel 更方便（同一 Activity 作用域）
+    3) 页面切换不需要重建 Activity，BLE 连接不受影响
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rootLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/navHostFragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        app:defaultNavHost="true"
+        app:navGraph="@navigation/nav_graph" />
+
+    <com.google.android.material.divider.MaterialDivider
+        android:layout_width="match_parent"
+        android:layout_height="1dp" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bg_card"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_nav_menu" />
+
+</LinearLayout>

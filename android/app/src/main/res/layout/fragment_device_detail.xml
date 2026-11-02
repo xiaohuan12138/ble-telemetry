@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  设备详情页：本项目最核心的界面，三块内容
+    1) 顶部连接状态条（状态文字 + 连接/断开按钮）
+    2) 四个指标卡 + 自定义折线 View
+    3) 反向控制区（LED 滑杆、蜂鸣器、上报周期、滤波方式）
+  外层用 ScrollView 包住，竖屏放得下。
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_page"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- ===== 1. 连接状态条 ===== -->
+        <LinearLayout
+            style="@style/CardSurface"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <View
+                android:id="@+id/statusDot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_status_dot" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvDeviceName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SensorHub-01"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvState"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/state_disconnected"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnConnect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_connect" />
+
+        </LinearLayout>
+
+        <!-- ===== 2. 四个指标卡 ===== -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                style="@style/CardSurface"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="@string/label_temp" />
+
+                <TextView
+                    android:id="@+id/tvTemp"
+                    style="@style/MetricValue"
+                    android:text="--" />
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="@string/unit_celsius" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/CardSurface"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="@string/label_hum" />
+
+                <TextView
+                    android:id="@+id/tvHum"
+                    style="@style/MetricValue"
+                    android:text="--" />
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="@string/unit_percent" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                style="@style/CardSurface"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="@string/label_press" />
+
+                <TextView
+                    android:id="@+id/tvPress"
+                    style="@style/MetricValue"
+                    android:text="--" />
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="@string/unit_hpa" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/CardSurface"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="@string/label_lux" />
+
+                <TextView
+                    android:id="@+id/tvLux"
+                    style="@style/MetricValue"
+                    android:text="--" />
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:text="@string/unit_lux" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ===== 3. 实时曲线（自定义 View）===== -->
+        <LinearLayout
+            style="@style/CardSurface"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/SectionTitle"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="实时曲线" />
+
+                <TextView
+                    android:id="@+id/tvLoss"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+            <!-- 自定义 View：环形缓冲 + Canvas 绘制，不依赖任何图表库 -->
+            <com.sensorhub.app.ui.widget.RealtimeChartView
+                android:id="@+id/chartView"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:layout_marginTop="8dp" />
+
+            <RadioGroup
+                android:id="@+id/rgChartChannel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rbTemp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/label_temp"
+                    android:textSize="12sp" />
+
+                <RadioButton
+                    android:id="@+id/rbHum"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_hum"
+                    android:textSize="12sp" />
+
+                <RadioButton
+                    android:id="@+id/rbPress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_press"
+                    android:textSize="12sp" />
+
+                <RadioButton
+                    android:id="@+id/rbLux"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_lux"
+                    android:textSize="12sp" />
+
+            </RadioGroup>
+
+        </LinearLayout>
+
+        <!-- ===== 4. 反向控制区 ===== -->
+        <LinearLayout
+            style="@style/CardSurface"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/SectionTitle"
+                android:text="反向控制" />
+
+            <TextView
+                style="@style/MetricLabel"
+                android:layout_marginTop="8dp"
+                android:text="@string/label_led" />
+
+            <SeekBar
+                android:id="@+id/seekLed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="255" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/label_buzzer" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnBeep"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/btn_beep" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/label_period" />
+
+                <TextView
+                    android:id="@+id/tvPeriod"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp" />
+
+            </LinearLayout>
+
+            <SeekBar
+                android:id="@+id/seekPeriod"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="98" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:layout_width="wrap_content"
+                    android:text="@string/label_filter" />
+
+                <RadioGroup
+                    android:id="@+id/rgFilter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="horizontal">
+
+                    <RadioButton
+                        android:id="@+id/rbFilterNone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="@string/filter_none"
+                        android:textSize="11sp" />
+
+                    <RadioButton
+                        android:id="@+id/rbFilterMoving"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/filter_moving"
+                        android:textSize="11sp" />
+
+                    <RadioButton
+                        android:id="@+id/rbFilterKalman"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/filter_kalman"
+                        android:textSize="11sp" />
+
+                </RadioGroup>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- ===== 5. 链路质量 ===== -->
+        <LinearLayout
+            style="@style/CardSurface"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/SectionTitle"
+                android:text="链路质量" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/label_rssi" />
+
+                <TextView
+                    android:id="@+id/tvRssi"
+                    style="@style/MetricLabel"
+                    android:text="--" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/MetricLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/label_altitude" />
+
+                <TextView
+                    android:id="@+id/tvAltitude"
+                    style="@style/MetricLabel"
+                    android:text="--" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
