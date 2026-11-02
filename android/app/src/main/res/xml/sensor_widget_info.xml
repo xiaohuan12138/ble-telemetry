@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  小组件元数据：定义它在桌面上占多大、多久刷新一次、能不能缩放。
+  updatePeriodMillis：系统自动刷新的最小间隔。
+  ⚠️ Android 强制最小 30 分钟（1800000ms），想更频繁只能自己发广播。
+     本项目由 App 在收到 BLE 数据时主动调用 updateAppWidget() 刷新，
+     所以这里写死 30 分钟也无所谓——真正生效的是代码里的主动刷新。
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_desc"
+    android:initialLayout="@layout/widget_sensor"
+    android:minWidth="180dp"
+    android:minHeight="60dp"
+    android:previewImage="@drawable/ic_launcher_foreground"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen" />
