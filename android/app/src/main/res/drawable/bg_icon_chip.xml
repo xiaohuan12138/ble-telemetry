@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 图标芯片：极浅主色圆底 + 居中图标，用于列表项左侧，提升识别度 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/primary_tint_bg" />
+    <size
+        android:width="40dp"
+        android:height="40dp" />
+</shape>

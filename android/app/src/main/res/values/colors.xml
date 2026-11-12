@@ -19,12 +19,15 @@
     <color name="text_secondary">#99000000</color>
     <color name="divider">#1F000000</color>
 
-    <!-- 四条曲线的配色：温度暖色、湿度蓝、气压紫、光照黄 -->
+    <!-- 四条曲线的配色：温度暖色、湿度蓝、气压紫、光照琥珀（黄在白底上对比度不足，换成琥珀） -->
     <color name="chart_temp">#FFE53935</color>
     <color name="chart_hum">#FF1E88E5</color>
     <color name="chart_press">#FF8E24AA</color>
-    <color name="chart_lux">#FFFDD835</color>
+    <color name="chart_lux">#FFF59F00</color>
     <color name="chart_grid">#1A000000</color>
+
+    <!-- 图标芯片背景：主色的极浅版本，用于列表项 / 状态区的图标底 -->
+    <color name="primary_tint_bg">#FFE0F2F1</color>
 
     <!-- 启动器图标背景 -->
     <color name="ic_launcher_background">#FF00695C</color>
