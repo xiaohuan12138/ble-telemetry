@@ -42,7 +42,7 @@
     <string name="editor_banner_subtitle">卷积滤镜 · 几何变换 · 离线文字识别</string>
     <string name="editor_cost_idle">未处理</string>
     <string name="editor_cost_format">%1$d ms</string>
-    <string name="editor_viewer_hint">点按图片可放大查看（捏合缩放 / 双击放大）</string>
+    <string name="editor_viewer_hint">点按图片放大查看（捏合 / 双击 / 鼠标滚轮缩放）</string>
     <string name="editor_viewer_caption">%1$s · %2$s</string>
 
     <!-- 浮窗 AI 助手 -->

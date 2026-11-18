@@ -157,4 +157,24 @@ class ZoomableImageView @JvmOverloads constructor(
         super.setImageBitmap(bm)
         resetToFit()
     }
+
+    /**
+     * 鼠标 / 触控板滚轮缩放：接上鼠标（模拟器、平板、Chromebook）后
+     * 滚轮前后滚动即以指针为锚点缩放。AXIS_HSCROLL 是横向滚轮，
+     * 同样映射到缩放（方向一致，体验统一）。
+     */
+    override fun onGenericMotionEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_SCROLL &&
+            event.isFromSource(android.view.InputDevice.SOURCE_CLASS_POINTER)
+        ) {
+            val dy = event.getAxisValue(MotionEvent.AXIS_VSCROLL)
+            val dx = event.getAxisValue(MotionEvent.AXIS_HSCROLL)
+            val factor = Math.pow(1.15, (-dy + dx).toDouble()).toFloat()
+            if (factor != 1f) {
+                scaleBy(factor, event.x, event.y)
+                return true
+            }
+        }
+        return super.onGenericMotionEvent(event)
+    }
 }
