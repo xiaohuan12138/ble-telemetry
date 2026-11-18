@@ -57,7 +57,12 @@ class PhotoAdapter(
         } else {
             holder.thumb.setImageResource(R.drawable.ic_tab_gallery)
         }
-        holder.filter.text = FilterPreset.fromName(photo.filterName).displayName
+        // GAUSSIAN/GRAYSCALE 走 Convolver 专门实现，不在 FilterPreset 枚举里，单独给显示名
+        holder.filter.text = when (photo.filterName) {
+            "GAUSSIAN" -> "高斯模糊"
+            "GRAYSCALE" -> "灰度"
+            else -> FilterPreset.fromName(photo.filterName).displayName
+        }
         holder.meta.text = "${photo.width}×${photo.height} · ${photo.costMs} ms"
         holder.time.text = TIME_FMT.format(Date(photo.createdAt))
 

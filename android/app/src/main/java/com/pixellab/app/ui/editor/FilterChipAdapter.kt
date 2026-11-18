@@ -48,9 +48,7 @@ class FilterChipAdapter(
             if (idxNew >= 0) notifyItemChanged(idxNew)
         }
 
-    class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val label: TextView = view.findViewById(android.R.id.text1)
-    }
+    class VH(val label: TextView) : RecyclerView.ViewHolder(label)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val tv = TextView(parent.context).apply {
