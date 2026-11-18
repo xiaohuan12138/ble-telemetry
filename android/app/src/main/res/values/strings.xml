@@ -39,6 +39,17 @@
     <string name="editor_ocr_empty">没识别到文字</string>
     <string name="editor_saved">已保存到历史 ✓</string>
     <string name="editor_share_ready">分享卡片已生成</string>
+    <string name="editor_banner_subtitle">卷积滤镜 · 几何变换 · 离线文字识别</string>
+    <string name="editor_cost_idle">未处理</string>
+    <string name="editor_cost_format">%1$d ms</string>
+
+    <!-- 浮窗 AI 助手 -->
+    <string name="assist_title">小像素助手</string>
+    <string name="assist_subtitle">离线问答 · 就在本机运行，不联网</string>
+    <string name="assist_greeting">你好！我是像素工坊的内置助手 🤖\n滤镜原理、使用步骤、保存分享……任何问题直接问我。</string>
+    <string name="assist_input_hint">输入你的问题，比如：高斯模糊是什么原理？</string>
+    <string name="assist_send">发送</string>
+    <string name="assist_ball_desc">AI 助手浮窗</string>
 
     <!-- 批量页 -->
     <string name="batch_title">批量处理</string>

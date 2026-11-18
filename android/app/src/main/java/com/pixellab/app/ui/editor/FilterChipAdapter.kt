@@ -67,12 +67,16 @@ class FilterChipAdapter(
         val chip = getItem(position)
         val selected = chip.key == selectedKey
         holder.label.text = chip.label
+        // 选中态：实心主色胶囊 + 白字；未选中：空心胶囊 + 灰字
+        holder.label.setBackgroundResource(
+            if (selected) R.drawable.bg_chip_on else R.drawable.bg_chip
+        )
         holder.label.setTextColor(
             holder.label.context.getColor(
-                if (selected) R.color.primary else R.color.text_secondary
+                if (selected) android.R.color.white else R.color.text_secondary
             )
         )
-        holder.label.alpha = if (selected) 1f else 0.75f
+        holder.label.alpha = if (selected) 1f else 0.85f
         holder.label.setOnClickListener { onSelect(chip) }
     }
 }

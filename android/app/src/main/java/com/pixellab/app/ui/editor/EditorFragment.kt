@@ -15,6 +15,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.pixellab.app.PixelLabApp
 import com.pixellab.app.R
 import com.pixellab.app.databinding.FragmentEditorBinding
+import com.pixellab.app.image.FilterPreset
 import com.pixellab.app.share.CardGenerator
 import com.pixellab.app.ui.gallery.EditorArgs
 import kotlinx.coroutines.launch
@@ -72,8 +73,15 @@ class EditorFragment : Fragment() {
                     binding.imgBefore.setImageBitmap(s.source)
                     binding.imgAfter.setImageBitmap(s.current)
                     binding.progress.visibility = if (s.busy) View.VISIBLE else View.GONE
-                    binding.tvCost.text =
-                        if (s.costMs > 0) "卷积 ${s.widthInfo()}×${s.heightInfo()} · 耗时 ${s.costMs} ms" else ""
+
+                    // 横幅参数徽章：尺寸 / 耗时 / 滤镜名
+                    val w = s.current?.width ?: 0
+                    val h = s.current?.height ?: 0
+                    binding.badgeSize.text = if (w > 0) "$w×$h" else "--×--"
+                    binding.badgeCost.text =
+                        if (s.costMs > 0) getString(R.string.editor_cost_format, s.costMs)
+                        else getString(R.string.editor_cost_idle)
+                    binding.badgeFilter.text = filterDisplayName(s.filterKey)
 
                     chipAdapter.selectedKey = s.filterKey
 
@@ -96,8 +104,12 @@ class EditorFragment : Fragment() {
         }
     }
 
-    private fun EditorState.widthInfo() = current?.width ?: 0
-    private fun EditorState.heightInfo() = current?.height ?: 0
+    /** 滤镜显示名：卷积预设走枚举的 displayName，高斯/灰度是专门实现单独给名 */
+    private fun filterDisplayName(key: String?): String = when (key) {
+        "GAUSSIAN" -> getString(R.string.filter_gaussian)
+        "GRAYSCALE" -> getString(R.string.filter_grayscale)
+        else -> FilterPreset.fromName(key).displayName
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
