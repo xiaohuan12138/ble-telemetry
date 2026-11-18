@@ -15,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.pixellab.app.PixelLabApp
 import com.pixellab.app.R
 import com.pixellab.app.databinding.FragmentStatsBinding
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

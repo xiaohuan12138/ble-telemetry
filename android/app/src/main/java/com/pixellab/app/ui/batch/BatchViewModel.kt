@@ -9,6 +9,7 @@ import com.pixellab.app.PixelLabApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 /** 批量页状态：选中项的文件名 + 进度 */
 data class BatchState(

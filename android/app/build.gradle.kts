@@ -64,6 +64,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+    // play-services 扩展：把 Google Task（ML Kit 的回调）转成 suspend await()
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.11.0")
 
     // ---------------- Navigation ----------------
     // 单 Activity 多 Fragment；只有一处跳转参数（图片 ID），用 Bundle 显式传参

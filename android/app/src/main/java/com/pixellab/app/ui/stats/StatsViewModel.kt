@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -29,7 +30,7 @@ class StatsViewModel(private val app: PixelLabApp) : ViewModel() {
     /** 加载记录下拉列表 */
     fun loadRecords() {
         viewModelScope.launch {
-            val list = kotlinx.coroutines.flow.first(app.db.photoDao().observeAll())
+            val list = app.db.photoDao().observeAll().first()
             _state.value = _state.value.copy(records = list)
         }
     }
@@ -61,7 +62,7 @@ class StatsViewModel(private val app: PixelLabApp) : ViewModel() {
                         appendLine("相机型号: ${e.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL) ?: "-"}")
                         appendLine("焦距: ${e.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH) ?: "-"}")
                         appendLine("光圈: ${e.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER) ?: "-"}")
-                        appendLine("ISO: ${e.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_ISO) ?: "-"}")
+                        appendLine("ISO: ${e.getAttribute("ISOSpeedRatings") ?: "-"}")
                         appendLine("方向: ${e.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION, 1)}")
                         appendLine("尺寸: ${e.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_WIDTH)}×${e.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_LENGTH)}")
                     }.trim()

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -27,9 +28,6 @@ class SettingsRepository(private val context: Context) {
         /** 保存结果后是否自动弹出分享卡片（P4 入口开关） */
         val AUTO_SHARE = booleanPreferencesKey("auto_share")
     }
-
-    private fun stringPreferencesKey(name: String) =
-        androidx.datastore.preferences.core.stringPreferencesKey(name)
 
     /** 默认滤镜名，Flow 订阅：设置页改了，编辑页自动跟着变 */
     val defaultFilter: Flow<String> =

@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.tasks.await
@@ -46,7 +47,7 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
         viewModelScope.launch {
             _state.value = _state.value.copy(busy = true)
             val bmp = withContext(Dispatchers.IO) {
-                maxEdge = kotlinx.coroutines.flow.first(app.settings.editMaxEdge)
+                maxEdge = app.settings.editMaxEdge.first()
                 ProcessEngine.loadForEdit(path, maxEdge)
             }
             _state.value = EditorState(source = bmp, current = bmp)
