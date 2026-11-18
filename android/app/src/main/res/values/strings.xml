@@ -47,11 +47,12 @@
 
     <!-- 浮窗 AI 助手 -->
     <string name="assist_title">小像素助手</string>
-    <string name="assist_subtitle">离线问答 · 就在本机运行，不联网</string>
+    <string name="assist_subtitle">离线问答 · 边操作边提问</string>
     <string name="assist_greeting">你好！我是像素工坊的内置助手 🤖\n滤镜原理、使用步骤、保存分享……任何问题直接问我。</string>
     <string name="assist_input_hint">输入你的问题，比如：高斯模糊是什么原理？</string>
     <string name="assist_send">发送</string>
     <string name="assist_ball_desc">AI 助手浮窗</string>
+    <string name="assist_close">收起助手</string>
 
     <!-- 批量页 -->
     <string name="batch_title">批量处理</string>

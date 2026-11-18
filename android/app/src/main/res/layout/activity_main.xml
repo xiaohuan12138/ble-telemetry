@@ -31,10 +31,7 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- ═══ AI 助手浮窗球 ═══
-         ConstraintLayout 的子 View 位置由约束决定，想自由拖动就绕过约束：
-         ConstraintLayout 内放一个不支持约束定位的容器（FrameLayout + layout_gravity）
-         行不通——这里直接用 translationX/Y 偏移：View 初始位置固定在右下角约束点，
-         拖动时改 translationX/Y（不影响约束，只加偏移），零测量冲突 -->
+         拖动改 translationX/Y（在约束位置上叠加偏移，不触发重新布局），零测量冲突 -->
     <FrameLayout
         android:id="@+id/assistBall"
         android:layout_width="56dp"
@@ -55,4 +52,114 @@
             android:src="@drawable/ic_assist"
             app:tint="#FFFFFFFF" />
     </FrameLayout>
+
+    <!-- ═══ AI 助手悬浮聊天窗 ═══
+         不是 Dialog——是普通覆盖层 View：页面不被遮罩、不暂停，
+         边调滤镜边提问。标题栏是拖动手柄，右上 × 收起回浮窗球 -->
+    <LinearLayout
+        android:id="@+id/assistPanel"
+        android:layout_width="320dp"
+        android:layout_height="420dp"
+        android:layout_marginTop="70dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_assist_panel"
+        android:elevation="30dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- 标题栏（拖动手柄） -->
+        <LinearLayout
+            android:id="@+id/assistHeader"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_gradient_banner"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:contentDescription="@string/assist_title"
+                android:src="@drawable/ic_assist"
+                app:tint="#FFFFFFFF" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="@string/assist_title"
+                android:textColor="#FFFFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnAssistClose"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/assist_close"
+                android:src="@drawable/ic_close_viewer"
+                app:tint="#CCFFFFFF" />
+        </LinearLayout>
+
+        <!-- 消息区：可滚动 -->
+        <ScrollView
+            android:id="@+id/assistScroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:padding="12dp"
+            android:scrollbars="none">
+
+            <TextView
+                android:id="@+id/tvAssistLog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="3dp"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp" />
+        </ScrollView>
+
+        <!-- 输入行 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:paddingBottom="10dp">
+
+            <EditText
+                android:id="@+id/etAssistInput"
+                android:layout_width="0dp"
+                android:layout_height="42dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_chip"
+                android:imeOptions="actionSend"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingHorizontal="12dp"
+                android:textColor="@color/text_primary"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnAssistSend"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:layout_marginStart="8dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:minWidth="0dp"
+                android:paddingHorizontal="14dp"
+                android:text="@string/assist_send"
+                android:textColor="#FFFFFFFF"
+                android:textSize="12sp"
+                app:backgroundTint="@color/primary" />
+        </LinearLayout>
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
