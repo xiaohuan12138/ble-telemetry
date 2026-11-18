@@ -29,4 +29,30 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- ═══ AI 助手浮窗球 ═══
+         ConstraintLayout 的子 View 位置由约束决定，想自由拖动就绕过约束：
+         ConstraintLayout 内放一个不支持约束定位的容器（FrameLayout + layout_gravity）
+         行不通——这里直接用 translationX/Y 偏移：View 初始位置固定在右下角约束点，
+         拖动时改 translationX/Y（不影响约束，只加偏移），零测量冲突 -->
+    <FrameLayout
+        android:id="@+id/assistBall"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="96dp"
+        android:background="@drawable/bg_assist_ball"
+        android:contentDescription="@string/assist_ball_desc"
+        android:elevation="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/assist_ball_desc"
+            android:src="@drawable/ic_assist"
+            app:tint="#FFFFFFFF" />
+    </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
