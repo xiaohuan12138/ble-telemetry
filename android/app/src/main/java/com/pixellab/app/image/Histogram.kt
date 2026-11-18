@@ -1,5 +1,7 @@
 package com.pixellab.app.image
 
+import kotlin.math.log2
+
 /**
  * 灰度直方图统计（Histogram）
  *
@@ -9,18 +11,27 @@ package com.pixellab.app.image
  * 用途（也是答辩亮点）：
  *   - 滤镜"处理前/后"的直方图对比，能量化地展示效果：
  *     模糊 → 分布收窄（方差变小）；边缘检测 → 双峰（平坦区黑 + 边缘亮）；
- *     直方图均衡化 → 分布拉开（对比度增大）。
- *   - 统计均值 / 标准差：一图一行数字就能说明"这张图偏亮还是偏暗、对比高还是低"，
- *     这是把"看起来变亮了"变成"均值从 112 提升到 148"的量化叙事。
+ *   - 全套量化指标（μ/σ/极值/中位数/众数/熵/过曝欠曝率/RGB 均值），
+ *     把"看起来变亮了"变成"均值从 112 提升到 148"的量化叙事。
  */
 class Histogram {
 
-    /** 统计结果：256 个 bin 的灰度计数 + 汇总指标 */
+    /** 统计结果：256 个 bin 的灰度计数 + 全套汇总指标 */
     data class Stats(
-        val bins: IntArray,       // 长度 256，bins[i] = 灰度值为 i 的像素数
-        val mean: Float,          // 均值 μ
-        val stdDev: Float,        // 标准差 σ（对比度的度量）
-        val totalPixels: Int
+        val bins: IntArray,        // 长度 256，bins[i] = 灰度值为 i 的像素数
+        val mean: Float,           // 均值 μ
+        val stdDev: Float,         // 标准差 σ（对比度的度量）
+        val totalPixels: Int,
+        val minGray: Int,          // 最暗灰度（分布左端点）
+        val maxGray: Int,          // 最亮灰度（分布右端点）
+        val median: Int,           // 中位数：累积计数过半处的灰度级
+        val mode: Int,             // 众数：计数最大的灰度级
+        val entropy: Float,        // 信息熵（bit/像素）：分布"散"的程度
+        val darkRatio: Float,      // 欠曝率：灰度 <10 的像素占比
+        val blowoutRatio: Float,   // 过曝率：灰度 >245 的像素占比
+        val meanR: Float,          // R 通道均值（彩色信息，直方图只看灰度会丢）
+        val meanG: Float,
+        val meanB: Float
     )
 
     /**
@@ -28,13 +39,19 @@ class Histogram {
      * 灰度用 BT.601 系数（0.299/0.587/0.114），与 Convolver.grayscale() 保持一致，
      * 保证"显示的灰度图"和"统计的灰度"是同一个定义。
      *
-     * 实现是单遍 O(N)：先累加计数，再用计数直接算均值和方差（E[X²]-E[X]²），
-     * 不需要第二遍遍历。
+     * 实现：像素域单遍 O(N)（计数 + μ/σ 累加 + RGB 累加 + 极值追踪），
+     * 再从 bins 做 O(256) 的后处理（中位数/众数/熵/过曝欠曝率）——
+     * 全程不需要第二遍遍历像素。
      */
     fun compute(pixels: IntArray): Stats {
         val bins = IntArray(256)
         var sum = 0L
         var sumSq = 0L
+        var sumR = 0L
+        var sumG = 0L
+        var sumB = 0L
+        var minG = 255
+        var maxG = 0
 
         for (p in pixels) {
             val r = p shr 16 and 0xFF
@@ -46,6 +63,11 @@ class Histogram {
             bins[yy]++
             sum += yy
             sumSq += yy.toLong() * yy
+            sumR += r
+            sumG += g
+            sumB += b
+            if (yy < minG) minG = yy
+            if (yy > maxG) maxG = yy
         }
 
         val n = pixels.size
@@ -55,6 +77,40 @@ class Histogram {
         else sumSq.toFloat() / n - mean * mean
         val stdDev = kotlin.math.sqrt(variance.coerceAtLeast(0f))
 
-        return Stats(bins, mean, stdDev, n)
+        // ── 从 bins 后处理（O(256)，与像素数无关） ──
+        var median = 0
+        var mode = 0
+        var modeCount = 0
+        var darkCount = 0
+        var blowoutCount = 0
+        var entropySum = 0.0
+        var acc = 0L
+        val half = n / 2L
+        for (i in 0..255) {
+            val c = bins[i]
+            // 中位数：累积计数第一次过半（n 为偶数时取下中位，与 int 域 μ 精度一致）
+            if (acc < half) { median = i; acc += c }
+            if (c > modeCount) { modeCount = c; mode = i }
+            if (i < 10) darkCount += c
+            if (i > 245) blowoutCount += c
+            // 熵：p·log2(p) 按灰度级累加，p=0 的项贡献为 0
+            if (c > 0) {
+                val p = c.toDouble() / n
+                entropySum -= p * log2(p)
+            }
+        }
+
+        return Stats(
+            bins, mean, stdDev, n,
+            if (n == 0) 0 else minG,
+            if (n == 0) 0 else maxG,
+            median, mode,
+            entropySum.toFloat(),
+            if (n == 0) 0f else darkCount.toFloat() / n,
+            if (n == 0) 0f else blowoutCount.toFloat() / n,
+            if (n == 0) 0f else sumR.toFloat() / n,
+            if (n == 0) 0f else sumG.toFloat() / n,
+            if (n == 0) 0f else sumB.toFloat() / n
+        )
     }
 }

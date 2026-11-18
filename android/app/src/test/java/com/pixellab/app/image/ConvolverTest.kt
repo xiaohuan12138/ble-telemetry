@@ -151,4 +151,36 @@ class ConvolverTest {
         assertEquals(127.5f, stats.mean, 0.1f)
         assertEquals(127.5f, stats.stdDev, 0.2f)
     }
+
+    @Test
+    fun `直方图统计_均匀图的极值中位数众数与熵`() {
+        // 全 128：min=max=median=mode=128；单值分布熵为 0；无过曝欠曝
+        val hist = Histogram()
+        val stats = hist.compute(grayImage(128))
+        assertEquals(128, stats.minGray)
+        assertEquals(128, stats.maxGray)
+        assertEquals(128, stats.median)
+        assertEquals(128, stats.mode)
+        assertEquals(0f, stats.entropy, 0.001f)
+        assertEquals(0f, stats.darkRatio, 0.001f)
+        assertEquals(0f, stats.blowoutRatio, 0.001f)
+        // RGB 三通道均值与灰度一致
+        assertEquals(128f, stats.meanR, 0.01f)
+        assertEquals(128f, stats.meanG, 0.01f)
+        assertEquals(128f, stats.meanB, 0.01f)
+    }
+
+    @Test
+    fun `直方图统计_黑白图的过曝欠曝与熵`() {
+        // 一半黑一半白：欠曝率 = 过曝率 = 0.5；
+        // 熵 = -(0.5·log2 0.5)×2 = 1 bit（二元分布满熵）
+        val hist = Histogram()
+        val src = IntArray(100) { if (it % 2 == 0) grayImage(0)[0] else grayImage(255)[0] }
+        val stats = hist.compute(src)
+        assertEquals(0, stats.minGray)
+        assertEquals(255, stats.maxGray)
+        assertEquals(0.5f, stats.darkRatio, 0.001f)
+        assertEquals(0.5f, stats.blowoutRatio, 0.001f)
+        assertEquals(1f, stats.entropy, 0.01f)
+    }
 }

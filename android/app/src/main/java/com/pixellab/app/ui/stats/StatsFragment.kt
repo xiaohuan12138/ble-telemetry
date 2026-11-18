@@ -1,11 +1,13 @@
 package com.pixellab.app.ui.stats
 
 import android.os.Bundle
+import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -15,6 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.pixellab.app.PixelLabApp
 import com.pixellab.app.R
 import com.pixellab.app.databinding.FragmentStatsBinding
+import com.pixellab.app.image.Histogram
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -71,14 +74,7 @@ class StatsFragment : Fragment() {
                     if (before != null) binding.histBefore.setStats(before)
                     if (after != null) binding.histAfter.setStats(after)
 
-                    (binding.tvMeanBefore as TextView).text = before?.let {
-                        getString(R.string.stats_mean, it.mean) + "   " +
-                            getString(R.string.stats_stddev, it.stdDev)
-                    } ?: ""
-                    (binding.tvMeanAfter as TextView).text = after?.let {
-                        getString(R.string.stats_mean, it.mean) + "   " +
-                            getString(R.string.stats_stddev, it.stdDev)
-                    } ?: ""
+                    renderDetailTable(before, after)
 
                     if (s.exifText != null) {
                         binding.exifCard.visibility = View.VISIBLE
@@ -89,6 +85,59 @@ class StatsFragment : Fragment() {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * 渲染"量化指标对比"表：每个指标一行（指标名 | 处理前 | 处理后）。
+     * 动态构建而不是写死 XML：行数由指标决定，且前后值要用不同颜色区分。
+     */
+    private fun renderDetailTable(
+        before: Histogram.Stats?, after: Histogram.Stats?
+    ) {
+        val table = binding.detailTable
+        table.removeAllViews()
+        if (before == null && after == null) return
+
+        fun fmt1(v: Float) = String.format(Locale.CHINA, "%.1f", v)
+        fun pct(v: Float) = String.format(Locale.CHINA, "%.1f%%", v * 100)
+
+        val rows = listOf(
+            Triple("灰度均值 μ", fmt1(before?.mean ?: 0f), fmt1(after?.mean ?: 0f)),
+            Triple("标准差 σ（对比度）", fmt1(before?.stdDev ?: 0f), fmt1(after?.stdDev ?: 0f)),
+            Triple("最暗 / 最亮", "${before?.minGray ?: 0} / ${before?.maxGray ?: 0}",
+                "${after?.minGray ?: 0} / ${after?.maxGray ?: 0}"),
+            Triple("中位数", "${before?.median ?: 0}", "${after?.median ?: 0}"),
+            Triple("众数（出现最多灰度）", "${before?.mode ?: 0}", "${after?.mode ?: 0}"),
+            Triple("信息熵（bit/像素）", fmt1(before?.entropy ?: 0f), fmt1(after?.entropy ?: 0f)),
+            Triple("过曝率 >245", pct(before?.blowoutRatio ?: 0f), pct(after?.blowoutRatio ?: 0f)),
+            Triple("欠曝率 <10", pct(before?.darkRatio ?: 0f), pct(after?.darkRatio ?: 0f)),
+            Triple("R / G / B 均值",
+                "${fmt1(before?.meanR ?: 0f)} / ${fmt1(before?.meanG ?: 0f)} / ${fmt1(before?.meanB ?: 0f)}",
+                "${fmt1(after?.meanR ?: 0f)} / ${fmt1(after?.meanG ?: 0f)} / ${fmt1(after?.meanB ?: 0f)}")
+        )
+        for ((label, bv, av) in rows) {
+            table.addView(buildRow(label, bv, av))
+        }
+    }
+
+    /** 构建一行：label / before / after 三列 TextView */
+    private fun buildRow(label: String, beforeVal: String, afterVal: String): View {
+        val ctx = requireContext()
+        fun tv(text: String, weight: Float, color: Int, bold: Boolean = false) =
+            TextView(ctx).apply {
+                this.text = text
+                textSize = 12f
+                setTextColor(color)
+                layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, weight)
+                if (bold) setTypeface(typeface, Typeface.BOLD)
+            }
+        return LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 8, 0, 8)
+            addView(tv(label, 1.2f, ctx.getColor(R.color.text_secondary)))
+            addView(tv(beforeVal, 1f, ctx.getColor(R.color.tag_before)))
+            addView(tv(afterVal, 1f, ctx.getColor(R.color.tag_after), bold = true))
         }
     }
 
