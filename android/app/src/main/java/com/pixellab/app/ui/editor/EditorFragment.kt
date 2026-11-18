@@ -1,0 +1,106 @@
+package com.pixellab.app.ui.editor
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
+import com.pixellab.app.PixelLabApp
+import com.pixellab.app.R
+import com.pixellab.app.databinding.FragmentEditorBinding
+import com.pixellab.app.share.CardGenerator
+import com.pixellab.app.ui.gallery.EditorArgs
+import kotlinx.coroutines.launch
+
+/**
+ * 编辑页：滤镜/几何变换/OCR/保存/分享。
+ * 全部状态来自 EditorViewModel 的 StateFlow，Fragment 只做"渲染 + 转发点击"。
+ */
+class EditorFragment : Fragment() {
+
+    private var _binding: FragmentEditorBinding? = null
+    private val binding get() = _binding!!
+    private val viewModel: EditorViewModel by viewModels {
+        EditorViewModel.Factory(requireContext().applicationContext as PixelLabApp)
+    }
+    private val chipAdapter = FilterChipAdapter { viewModel.selectFilter(it.key) }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved: Bundle?): View {
+        _binding = FragmentEditorBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, saved: Bundle?) {
+        // 从跳转参数拿图片路径并加载（ViewModel 里做了"已加载不重复"保护）
+        val args = EditorArgs.from(arguments)
+        viewModel.load(args.sourcePath)
+
+        binding.chipRow.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        binding.chipRow.adapter = chipAdapter
+        chipAdapter.submitList(FilterChipAdapter.DEFAULT)
+
+        binding.btnApply.setOnClickListener { viewModel.applyFilter() }
+        binding.btnReset.setOnClickListener { viewModel.reset() }
+        binding.btnRotate.setOnClickListener { viewModel.rotate() }
+        binding.btnCrop11.setOnClickListener { viewModel.crop("1:1") }
+        binding.btnCrop43.setOnClickListener { viewModel.crop("4:3") }
+        binding.btnCrop169.setOnClickListener { viewModel.crop("16:9") }
+        binding.btnOcr.setOnClickListener { viewModel.runOcr() }
+        binding.btnSave.setOnClickListener { viewModel.save() }
+
+        // P4：用"处理前 + 处理后 + 参数"生成对比卡片并调起系统分享
+        binding.btnShare.setOnClickListener {
+            val s = viewModel.state.value
+            val source = s.source ?: return@setOnClickListener
+            val result = s.current ?: return@setOnClickListener
+            Snackbar.make(binding.root, R.string.editor_share_ready, Snackbar.LENGTH_SHORT).show()
+            CardGenerator.shareResultCard(
+                requireContext(), source, result, s.filterKey, s.costMs
+            )
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.state.collect { s ->
+                    binding.imgBefore.setImageBitmap(s.source)
+                    binding.imgAfter.setImageBitmap(s.current)
+                    binding.progress.visibility = if (s.busy) View.VISIBLE else View.GONE
+                    binding.tvCost.text =
+                        if (s.costMs > 0) "卷积 ${s.widthInfo()}×${s.heightInfo()} · 耗时 ${s.costMs} ms" else ""
+
+                    chipAdapter.selectedKey = s.filterKey
+
+                    // OCR 结果卡：有文字就展开，识别过但没文字显示"空"
+                    if (s.ocrText != null) {
+                        binding.ocrCard.visibility = View.VISIBLE
+                        binding.tvOcr.text = s.ocrText
+                    } else {
+                        binding.ocrCard.visibility = View.GONE
+                    }
+
+                    s.savedId?.let {
+                        Snackbar.make(binding.root, R.string.editor_saved, Snackbar.LENGTH_SHORT).show()
+                        // 保存后回图库（历史上的"编辑已完成"闭环）
+                        viewModel.clearSaved()
+                        findNavController().popBackStack()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun EditorState.widthInfo() = current?.width ?: 0
+    private fun EditorState.heightInfo() = current?.height ?: 0
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}
