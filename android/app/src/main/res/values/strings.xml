@@ -42,6 +42,8 @@
     <string name="editor_banner_subtitle">卷积滤镜 · 几何变换 · 离线文字识别</string>
     <string name="editor_cost_idle">未处理</string>
     <string name="editor_cost_format">%1$d ms</string>
+    <string name="editor_viewer_hint">点按图片可放大查看（捏合缩放 / 双击放大）</string>
+    <string name="editor_viewer_caption">%1$s · %2$s</string>
 
     <!-- 浮窗 AI 助手 -->
     <string name="assist_title">小像素助手</string>
@@ -73,8 +75,7 @@
     <string name="stats_pick_record">选一条历史记录</string>
     <string name="stats_before">处理前</string>
     <string name="stats_after">处理后</string>
-    <string name="stats_mean">灰度均值 μ：%1$.1f</string>
-    <string name="stats_stddev">标准差 σ：%1$.1f（对比度）</string>
+    <string name="stats_metrics_title">量化指标对比</string>
     <string name="stats_exif">EXIF 元数据</string>
     <string name="stats_exif_empty">这张图没有 EXIF（可能是截图或已压缩转存）</string>
 

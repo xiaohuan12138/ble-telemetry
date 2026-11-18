@@ -116,7 +116,7 @@
                 <ImageView
                     android:id="@+id/imgAfter"
                     android:layout_width="match_parent"
-                    android:layout_height="340dp"
+                    android:layout_height="300dp"
                     android:scaleType="fitCenter"
                     android:contentDescription="@string/label_after" />
 
@@ -134,6 +134,16 @@
                     android:textStyle="bold" />
             </FrameLayout>
 
+            <!-- 点击图片 → 全屏微信式查看器（捏合/双击缩放） -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:alpha="0.6"
+                android:text="@string/editor_viewer_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp" />
+
             <!-- ═══ 处理前图（对照，全宽 220dp） ═══ -->
             <FrameLayout
                 android:layout_width="match_parent"
@@ -146,7 +156,7 @@
                 <ImageView
                     android:id="@+id/imgBefore"
                     android:layout_width="match_parent"
-                    android:layout_height="220dp"
+                    android:layout_height="300dp"
                     android:scaleType="fitCenter"
                     android:contentDescription="@string/label_before" />
 

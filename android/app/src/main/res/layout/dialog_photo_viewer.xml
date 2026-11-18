@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 全屏大图查看器：黑底 + 可缩放图 + 顶部关闭 + 底部说明 -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FF000000">
+
+    <com.pixellab.app.ui.viewer.ZoomableImageView
+        android:id="@+id/viewerImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="56dp"
+        android:layout_marginBottom="64dp"
+        android:contentDescription="@string/label_after" />
+
+    <!-- 顶部关闭按钮 -->
+    <ImageButton
+        android:id="@+id/viewerClose"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="关闭"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_close_viewer"
+        app:tint="#CCFFFFFF"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+    <!-- 底部说明：处理前/处理后 · 滤镜名 -->
+    <TextView
+        android:id="@+id/viewerCaption"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="20dp"
+        android:shadowColor="#80000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="4"
+        android:textColor="#FFFFFFFF"
+        android:textSize="14sp" />
+</FrameLayout>

@@ -18,6 +18,7 @@ import com.pixellab.app.databinding.FragmentEditorBinding
 import com.pixellab.app.image.FilterPreset
 import com.pixellab.app.share.CardGenerator
 import com.pixellab.app.ui.gallery.EditorArgs
+import com.pixellab.app.ui.viewer.PhotoViewerDialog
 import kotlinx.coroutines.launch
 
 /**
@@ -55,6 +56,24 @@ class EditorFragment : Fragment() {
         binding.btnCrop169.setOnClickListener { viewModel.crop("16:9") }
         binding.btnOcr.setOnClickListener { viewModel.runOcr() }
         binding.btnSave.setOnClickListener { viewModel.save() }
+
+        // 点击前后图 → 全屏微信式查看器（捏合缩放 / 双击放大）
+        binding.imgAfter.setOnClickListener {
+            val s = viewModel.state.value
+            val bmp = s.current ?: return@setOnClickListener
+            PhotoViewerDialog.newInstance(
+                bmp, getString(R.string.editor_viewer_caption,
+                    getString(R.string.label_after), filterDisplayName(s.filterKey))
+            ).show(childFragmentManager, "viewer_after")
+        }
+        binding.imgBefore.setOnClickListener {
+            val s = viewModel.state.value
+            val bmp = s.source ?: return@setOnClickListener
+            PhotoViewerDialog.newInstance(
+                bmp, getString(R.string.editor_viewer_caption,
+                    getString(R.string.label_before), getString(R.string.editor_cost_idle))
+            ).show(childFragmentManager, "viewer_before")
+        }
 
         // P4：用"处理前 + 处理后 + 参数"生成对比卡片并调起系统分享
         binding.btnShare.setOnClickListener {
