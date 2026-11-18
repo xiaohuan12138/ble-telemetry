@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 导航图：底部 4 个 Tab + 编辑页。
+     编辑页通过 action 从图库进入，参数 photoId = -1 表示"新图编辑"（还未入库） -->
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_gallery">
+
+    <fragment
+        android:id="@+id/nav_gallery"
+        android:name="com.pixellab.app.ui.gallery.GalleryFragment"
+        android:label="@string/tab_gallery"
+        tools:layout="@layout/fragment_gallery"
+        xmlns:tools="http://schemas.android.com/tools">
+        <action
+            android:id="@+id/action_gallery_to_editor"
+            app:destination="@id/editor" />
+        <action
+            android:id="@+id/action_gallery_to_camera"
+            app:destination="@id/camera" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_batch"
+        android:name="com.pixellab.app.ui.batch.BatchFragment"
+        android:label="@string/tab_batch" />
+
+    <fragment
+        android:id="@+id/nav_stats"
+        android:name="com.pixellab.app.ui.stats.StatsFragment"
+        android:label="@string/tab_stats" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.pixellab.app.ui.settings.SettingsFragment"
+        android:label="@string/tab_settings" />
+
+    <fragment
+        android:id="@+id/editor"
+        android:name="com.pixellab.app.ui.editor.EditorFragment"
+        android:label="@string/editor_title" />
+
+    <fragment
+        android:id="@+id/camera"
+        android:name="com.pixellab.app.ui.camera.CameraFragment"
+        android:label="@string/gallery_camera" />
+</navigation>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider 白名单：只暴露 files-path 下的 share/ 目录给外部 App，
+     不暴露整个私有目录——最小暴露原则 -->
+<paths>
+    <files-path name="share" path="share/" />
+</paths>

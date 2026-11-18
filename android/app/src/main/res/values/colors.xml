@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主色：靛紫（影像工具感），500 / 700 两级 -->
+    <color name="primary">#FF3F51B5</color>
+    <color name="primary_variant">#FF303F9F</color>
+    <color name="secondary">#FF00897B</color>
+
+    <!-- 语义色 -->
+    <color name="success">#FF2E7D32</color>
+    <color name="warning">#FFF9A825</color>
+    <color name="danger">#FFC62828</color>
+    <color name="disabled">#FFBDBDBD</color>
+
+    <!-- 中性色 -->
+    <color name="bg_page">#FFF5F6FA</color>
+    <color name="bg_card">#FFFFFFFF</color>
+    <color name="text_primary">#DE000000</color>
+    <color name="text_secondary">#99000000</color>
+    <color name="divider">#1F000000</color>
+
+    <!-- 处理前 / 处理后对比标签 -->
+    <color name="tag_before">#FF757575</color>
+    <color name="tag_after">#FF3F51B5</color>
+
+    <!-- 直方图：柱体 + 网格线 -->
+    <color name="histogram_bar">#FF3F51B5</color>
+    <color name="histogram_grid">#1A000000</color>
+
+    <!-- 批量进度 -->
+    <color name="progress_done">#FF2E7D32</color>
+    <color name="progress_pending">#FFBDBDBD</color>
+
+    <!-- 启动图标背景（自适应图标引用） -->
+    <color name="ic_launcher_background">#FF303F9F</color>
+
+    <!-- 图标芯片底色：主色极浅版 -->
+    <color name="primary_tint_bg">#FFE8EAF6</color>
+</resources>

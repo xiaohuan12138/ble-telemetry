@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">像素工坊</string>
+
+    <!-- 底部导航 -->
+    <string name="tab_gallery">图库</string>
+    <string name="tab_batch">批量</string>
+    <string name="tab_stats">统计</string>
+    <string name="tab_settings">设置</string>
+
+    <!-- 图库页 -->
+    <string name="gallery_title">最近处理</string>
+    <string name="gallery_subtitle">拍照 / 选图 → 滤镜 → 保存，处理历史都在这里</string>
+    <string name="gallery_empty_title">还没有处理记录</string>
+    <string name="gallery_empty_hint">点下方按钮拍照或从相册选一张图开始</string>
+    <string name="gallery_pick">从相册选图</string>
+    <string name="gallery_camera">拍照</string>
+    <string name="gallery_camera_denied">未授权相机，已降级为仅相册选图。可在设置里重新授权</string>
+    <string name="gallery_cost_format">%1$d×%2$d · %3$d ms · %4$s</string>
+    <string name="gallery_delete">删除这条记录</string>
+
+    <!-- 编辑页 -->
+    <string name="editor_title">编辑</string>
+    <string name="label_before">处理前</string>
+    <string name="label_after">处理后</string>
+    <string name="filter_pick">选滤镜</string>
+    <string name="action_apply">应用滤镜</string>
+    <string name="action_rotate">旋转 90°</string>
+    <string name="action_crop_1_1">1:1</string>
+    <string name="action_crop_4_3">4:3</string>
+    <string name="action_crop_16_9">16:9</string>
+    <string name="action_ocr">文字识别</string>
+    <string name="action_save">保存到历史</string>
+    <string name="action_share_card">生成分享卡片</string>
+    <string name="action_reset">还原</string>
+    <string name="editor_processing">处理中…（Dispatchers.Default 并行计算）</string>
+    <string name="editor_ocr_running">识别中…</string>
+    <string name="editor_ocr_result">识别结果</string>
+    <string name="editor_ocr_empty">没识别到文字</string>
+    <string name="editor_saved">已保存到历史 ✓</string>
+    <string name="editor_share_ready">分享卡片已生成</string>
+
+    <!-- 批量页 -->
+    <string name="batch_title">批量处理</string>
+    <string name="batch_pick">多选图片</string>
+    <string name="batch_start">开始批处理</string>
+    <string name="batch_empty">从相册多选图片，选一个滤镜整批套用。处理走 WorkManager 后台队列，退出页面也不中断</string>
+    <string name="batch_running">%1$d/%2$d 已完成</string>
+    <string name="batch_done">全部完成 ✓ 成功 %1$d 张</string>
+    <string name="batch_filter_label">批处理滤镜</string>
+    <string name="filter_sharpen">锐化</string>
+    <string name="filter_mean_blur">均值模糊</string>
+    <string name="filter_edge">边缘检测</string>
+    <string name="filter_gaussian">高斯模糊</string>
+    <string name="filter_emboss">浮雕</string>
+    <string name="filter_sobel_v">垂直边缘</string>
+    <string name="filter_grayscale">灰度</string>
+
+    <!-- 统计页 -->
+    <string name="stats_title">图像统计</string>
+    <string name="stats_hint">在图库里选一条记录，查看它处理前后的灰度直方图与量化指标</string>
+    <string name="stats_pick_record">选一条历史记录</string>
+    <string name="stats_before">处理前</string>
+    <string name="stats_after">处理后</string>
+    <string name="stats_mean">灰度均值 μ：%1$.1f</string>
+    <string name="stats_stddev">标准差 σ：%1$.1f（对比度）</string>
+    <string name="stats_exif">EXIF 元数据</string>
+    <string name="stats_exif_empty">这张图没有 EXIF（可能是截图或已压缩转存）</string>
+
+    <!-- 设置页 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_default_filter">默认滤镜</string>
+    <string name="settings_edit_edge">编辑用最长边（像素，越小越快）</string>
+    <string name="settings_auto_share">保存后自动生成分享卡片</string>
+    <string name="settings_clear">清空全部历史</string>
+    <string name="settings_clear_confirm">将删除 %1$d 条历史记录及对应图片文件，不可恢复。确定？</string>
+    <string name="settings_count">当前历史：%1$d 条</string>
+
+    <!-- 小组件 / 分享 -->
+    <string name="widget_empty">还没处理过图片</string>
+    <string name="widget_open">点按打开像素工坊</string>
+    <string name="card_watermark">学号 202404100214 · 谢依诺</string>
+    <string name="card_title">PixelLab 处理报告</string>
+    <string name="share_via">分享处理卡片</string>
+</resources>

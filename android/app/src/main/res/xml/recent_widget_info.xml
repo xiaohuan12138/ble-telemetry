@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- P1 小组件元信息：2×2 格，每 30 分钟刷新一次（处理新图时也会主动触发刷新） -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="180dp"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_recent"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />
