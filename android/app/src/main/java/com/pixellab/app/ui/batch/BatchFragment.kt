@@ -107,6 +107,14 @@ class BatchFragment : Fragment() {
                     binding.tvBatchStatus.visibility =
                         if (s.total > 0) View.VISIBLE else View.GONE
 
+                    // 空态：既没有任务也没有结果行时，显示引导并隐藏进度区
+                    val empty = s.total == 0 && rowAdapter.itemCount == 0
+                    binding.emptyBatch.visibility = if (empty) View.VISIBLE else View.GONE
+                    binding.tvBatchStatus.visibility =
+                        if (empty) View.GONE else binding.tvBatchStatus.visibility
+                    binding.batchProgress.visibility =
+                        if (empty) View.GONE else binding.batchProgress.visibility
+
                     if (s.total > 0) {
                         binding.batchProgress.max = s.total
                         binding.batchProgress.progress = s.done

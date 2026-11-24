@@ -44,6 +44,9 @@
     <string name="editor_cost_format">%1$d ms</string>
     <string name="editor_viewer_hint">点按图片放大查看（捏合 / 双击 / 鼠标滚轮缩放）</string>
     <string name="editor_viewer_caption">%1$s · %2$s</string>
+    <string name="editor_compare_title">滑动对比</string>
+    <string name="editor_compare_hint">左右拖动分割线，同屏对比处理前后</string>
+    <string name="editor_strength_label">滤镜强度</string>
 
     <!-- 浮窗 AI 助手 -->
     <string name="assist_title">小像素助手</string>
@@ -56,6 +59,9 @@
 
     <!-- 批量页 -->
     <string name="batch_title">批量处理</string>
+    <string name="batch_banner_subtitle">多选 → 选滤镜 → 后台整批套用</string>
+    <string name="batch_empty_title">还没有批处理任务</string>
+    <string name="batch_empty_hint">点上方“多选图片”，一次最多 9 张整批套滤镜</string>
     <string name="batch_pick">多选图片</string>
     <string name="batch_start">开始批处理</string>
     <string name="batch_empty">从相册多选图片，选一个滤镜整批套用。处理走 WorkManager 后台队列，退出页面也不中断</string>
@@ -72,6 +78,9 @@
 
     <!-- 统计页 -->
     <string name="stats_title">图像统计</string>
+    <string name="stats_banner_subtitle">直方图 · 量化指标 · EXIF 元数据</string>
+    <string name="stats_empty_title">还没有可统计的记录</string>
+    <string name="stats_empty_hint">先去图库处理并保存一张图片，再回来查看前后对比</string>
     <string name="stats_hint">在图库里选一条记录，查看它处理前后的灰度直方图与量化指标</string>
     <string name="stats_pick_record">选一条历史记录</string>
     <string name="stats_before">处理前</string>
@@ -82,6 +91,7 @@
 
     <!-- 设置页 -->
     <string name="settings_title">设置</string>
+    <string name="settings_banner_subtitle">默认滤镜 · 性能与数据管理</string>
     <string name="settings_default_filter">默认滤镜</string>
     <string name="settings_edit_edge">编辑用最长边（像素，越小越快）</string>
     <string name="settings_auto_share">保存后自动生成分享卡片</string>

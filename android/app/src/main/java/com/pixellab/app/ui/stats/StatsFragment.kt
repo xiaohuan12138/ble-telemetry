@@ -9,6 +9,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -34,6 +35,9 @@ class StatsFragment : Fragment() {
         StatsViewModel.Factory(requireContext().applicationContext as PixelLabApp)
     }
     private val timeFmt = SimpleDateFormat("MM-dd HH:mm", Locale.CHINA)
+
+    /** 历史记录是否已加载过一次（避免 DB 异步加载前闪现空态） */
+    private var recordsLoaded = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved: Bundle?): View {
         _binding = FragmentStatsBinding.inflate(inflater, container, false)
@@ -67,12 +71,23 @@ class StatsFragment : Fragment() {
                         if (binding.spinnerRecord.adapter == null) {
                             binding.spinnerRecord.adapter = adapter
                         }
+                        recordsLoaded = true
                     }
 
                     val before = s.beforeStats
                     val after = s.afterStats
-                    if (before != null) binding.histBefore.setStats(before)
-                    if (after != null) binding.histAfter.setStats(after)
+                    // 前/后直方图双色：与指标表"处理前/处理后"列色一一对应
+                    if (before != null) {
+                        binding.histBefore.setStats(before, ContextCompat.getColor(requireContext(), R.color.tag_before))
+                    }
+                    if (after != null) {
+                        binding.histAfter.setStats(after, ContextCompat.getColor(requireContext(), R.color.primary))
+                    }
+
+                    // 空态：记录加载完且为空 → 显示引导，隐藏全部统计卡片
+                    val empty = recordsLoaded && s.records.isEmpty()
+                    binding.emptyStats.visibility = if (empty) View.VISIBLE else View.GONE
+                    binding.statsContent.visibility = if (empty) View.GONE else View.VISIBLE
 
                     renderDetailTable(before, after)
 
