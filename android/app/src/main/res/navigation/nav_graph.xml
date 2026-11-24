@@ -14,10 +14,18 @@
         xmlns:tools="http://schemas.android.com/tools">
         <action
             android:id="@+id/action_gallery_to_editor"
-            app:destination="@id/editor" />
+            app:destination="@id/editor"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/fade_out" />
         <action
             android:id="@+id/action_gallery_to_camera"
-            app:destination="@id/camera" />
+            app:destination="@id/camera"
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in"
+            app:popExitAnim="@anim/fade_out" />
     </fragment>
 
     <fragment

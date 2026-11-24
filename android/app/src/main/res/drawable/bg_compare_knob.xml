@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 对比滑块把手：白圆 + 主色描边 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <solid android:color="#FFFFFFFF" />
+    <stroke android:width="3dp" android:color="@color/primary" />
+    <size android:width="30dp" android:height="30dp" />
+</shape>

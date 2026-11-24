@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 图库列表项进场：淡入 + 轻微上移，stagger 由 layoutAnimation 的 delay 展开 -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shareInterpolator="true">
+    <alpha
+        android:duration="280"
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0" />
+    <translate
+        android:duration="280"
+        android:fromYDelta="15%"
+        android:toYDelta="0"
+        android:interpolator="@android:anim/decelerate_interpolator" />
+</set>

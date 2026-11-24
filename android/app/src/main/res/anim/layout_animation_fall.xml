@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 图库 RecyclerView 的进场编排：逐项延迟 15%，自上而下依次浮入 -->
+<layoutAnimation xmlns:android="http://schemas.android.com/apk/res/android"
+    android:delay="15%"
+    android:animationOrder="normal"
+    android:animation="@anim/item_fall_in" />

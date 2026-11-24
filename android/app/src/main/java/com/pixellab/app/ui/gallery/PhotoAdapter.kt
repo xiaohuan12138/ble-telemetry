@@ -1,5 +1,6 @@
 package com.pixellab.app.ui.gallery
 
+import android.content.res.ColorStateList
 import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.View
@@ -34,10 +35,26 @@ class PhotoAdapter(
             override fun areContentsTheSame(a: PhotoEntity, b: PhotoEntity) = a == b
         }
         private val TIME_FMT = SimpleDateFormat("MM-dd HH:mm", Locale.CHINA)
+
+        /** 滤镜 → 色标颜色（靛紫系主题 + 各滤镜一个区分色） */
+        private val FILTER_COLORS = mapOf(
+            "GAUSSIAN" to 0xFF6366F1.toInt(),
+            "GRAYSCALE" to 0xFF64748B.toInt(),
+            "SHARPEN" to 0xFFF59E0B.toInt(),
+            "MEAN_BLUR" to 0xFF38BDF8.toInt(),
+            "EDGE" to 0xFF14B8A6.toInt(),
+            "EMBOSS" to 0xFFA78BFA.toInt(),
+            "SOBEL_V" to 0xFFEF4444.toInt()
+        )
+
+        /** 未登记的滤镜回退中性灰 */
+        private fun filterColor(key: String) =
+            FILTER_COLORS[key] ?: 0xFF94A3B8.toInt()
     }
 
     class VH(view: View) : RecyclerView.ViewHolder(view) {
         val thumb: ImageView = view.findViewById(R.id.imgThumb)
+        val dot: View = view.findViewById(R.id.dotFilter)
         val filter: TextView = view.findViewById(R.id.tvFilter)
         val meta: TextView = view.findViewById(R.id.tvMeta)
         val time: TextView = view.findViewById(R.id.tvTime)
@@ -63,6 +80,8 @@ class PhotoAdapter(
             "GRAYSCALE" -> "灰度"
             else -> FilterPreset.fromName(photo.filterName).displayName
         }
+        // 滤镜色标：一眼区分这条记录用了哪类滤镜（颜色与 FilterChipAdapter 主题一致）
+        holder.dot.backgroundTintList = ColorStateList.valueOf(filterColor(photo.filterName))
         holder.meta.text = "${photo.width}×${photo.height} · ${photo.costMs} ms"
         holder.time.text = TIME_FMT.format(Date(photo.createdAt))
 

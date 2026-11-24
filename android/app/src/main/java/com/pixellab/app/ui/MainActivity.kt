@@ -1,5 +1,8 @@
 package com.pixellab.app.ui
 
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.SpannableStringBuilder
@@ -53,6 +56,9 @@ class MainActivity : AppCompatActivity() {
     /** 会话历史：Spannable 让"你/助手"前缀着色区分，面板收起再展开不清空 */
     private val chatLog = SpannableStringBuilder()
 
+    /** 浮窗球呼吸动画（面板展开时 pause，收起时 resume） */
+    private lateinit var pulse: AnimatorSet
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -63,6 +69,42 @@ class MainActivity : AppCompatActivity() {
 
         setupAssistBall()
         setupAssistPanel()
+        startBallPulse()
+    }
+
+    /**
+     * 浮窗球呼吸感：1.0 → 1.06 无限往复的轻微缩放。
+     * 面板展开时暂停（避免和内容抢注意力），收起时恢复。
+     */
+    private fun startBallPulse() {
+        val sx = ObjectAnimator.ofFloat(binding.assistBall, View.SCALE_X, 1f, 1.06f)
+        val sy = ObjectAnimator.ofFloat(binding.assistBall, View.SCALE_Y, 1f, 1.06f)
+        listOf(sx, sy).forEach {
+            it.duration = 1300
+            it.repeatCount = ValueAnimator.INFINITE
+            it.repeatMode = ValueAnimator.REVERSE
+        }
+        pulse = AnimatorSet().apply { playTogether(sx, sy); start() }
+    }
+
+    /**
+     * 松手吸附：球心在屏幕左半 → 吸到左缘，否则右缘；同时把 Y 钳回屏内。
+     * 布局基准位置 left/top = x − translationX，目标偏移按它反推。
+     */
+    private fun snapBall(ball: View) {
+        val dm = resources.displayMetrics
+        val m = 12 * dm.density
+        val baseX = ball.x - ball.translationX
+        val baseY = ball.y - ball.translationY
+        val tx = if (ball.x + ball.width / 2f < dm.widthPixels / 2f)
+            m - baseX
+        else
+            dm.widthPixels - m - ball.width - baseX
+        val ty = ball.translationY.coerceIn(
+            m - baseY,
+            dm.heightPixels - m - ball.height - baseY
+        )
+        ball.animate().translationX(tx).translationY(ty).setDuration(260).start()
     }
 
     /**
@@ -91,7 +133,7 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (!ballDragged) showAssistPanel()
+                    if (ballDragged) snapBall(ball) else showAssistPanel()
                     true
                 }
                 else -> false
@@ -130,7 +172,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.btnAssistClose.setOnClickListener { binding.assistPanel.visibility = View.GONE }
+        binding.btnAssistClose.setOnClickListener {
+            binding.assistPanel.visibility = View.GONE
+            pulse.resume()   // 收起后恢复浮窗球呼吸
+        }
 
         binding.btnAssistSend.setOnClickListener { sendQuestion() }
         binding.etAssistInput.setOnEditorActionListener { _, _, _ ->
@@ -149,6 +194,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAssistPanel() {
         binding.assistPanel.visibility = View.VISIBLE
+        pulse.pause()   // 面板展开时暂停呼吸，不抢注意力
         // 首次显示后记录"零偏移基准位置"（post 确保布局完成）
         if (panelBaseX.isNaN()) {
             binding.assistPanel.post {
