@@ -36,9 +36,12 @@ object ProcessEngine {
 
     /**
      * 应用滤镜（含"灰度"这个特殊项）。
+     * @param strength 滤镜强度 0~1：结果是原图与"全量处理图"的逐像素线性插值
+     *   （lerp = a·(1−t) + b·t）。t=1 等价原滤镜效果，t=0 等价原图；
+     *   卷积核固定不变，强度只控制混合比例——一次卷积 + 一次插值，成本极低。
      * @return 处理后 Bitmap + 耗时毫秒（存进历史记录，量化展示性能）
      */
-    fun applyFilter(src: Bitmap, filterKey: String): Pair<Bitmap, Long> {
+    fun applyFilter(src: Bitmap, filterKey: String, strength: Float = 1f): Pair<Bitmap, Long> {
         val start = System.currentTimeMillis()
         val w = src.width
         val h = src.height
@@ -52,9 +55,22 @@ object ProcessEngine {
             else -> convolver.apply3x3(pixels, w, h, FilterPreset.fromName(filterKey).kernel)
         }
 
+        // 强度混合：整数域 lerp，避免浮点逐像素开销（k 为 0..255 的混合系数）
+        val k = (strength.coerceIn(0f, 1f) * 255).toInt()
+        val mixed: IntArray = if (k >= 255) out else IntArray(out.size) { i ->
+            mixPixel(pixels[i], out[i], k)
+        }
+
         val result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        result.setPixels(out, 0, w, 0, 0, w, h)
+        result.setPixels(mixed, 0, w, 0, 0, w, h)
         return result to (System.currentTimeMillis() - start)
+    }
+
+    /** 两个 ARGB 像素的逐通道线性插值：v = (src·(255−k) + dst·k) / 255 */
+    private fun mixPixel(src: Int, dst: Int, k: Int): Int {
+        fun mix(shift: Int): Int =
+            (((src shr shift and 0xFF) * (255 - k)) + ((dst shr shift and 0xFF) * k)) / 255
+        return 0xFF000000.toInt() or (mix(16) shl 16) or (mix(8) shl 8) or mix(0)
     }
 
     /** 旋转 90°（顺时针），返回新 Bitmap */

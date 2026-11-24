@@ -27,6 +27,7 @@ data class EditorState(
     val source: Bitmap? = null,      // 处理前（还原基准）
     val current: Bitmap? = null,     // 处理后（当前工作副本）
     val filterKey: String = "SHARPEN",
+    val strength: Float = 1f,        // 滤镜强度 0~1（lerp 混合系数）
     val costMs: Long = 0,            // 最近一次处理耗时
     val busy: Boolean = false,       // 卷积/识别进行中
     val ocrText: String? = null,     // ML Kit 识别结果
@@ -59,6 +60,11 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
         _state.value = _state.value.copy(filterKey = key)
     }
 
+    /** 更新滤镜强度（只记值，松手后由 Fragment 触发 applyFilter） */
+    fun setStrength(v: Float) {
+        _state.value = _state.value.copy(strength = v)
+    }
+
     /**
      * 应用当前滤镜。
      * Dispatchers.Default：CPU 密集的卷积放到默认并行池（线程数 = CPU 核数），
@@ -67,10 +73,11 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
     fun applyFilter() {
         val src = _state.value.current ?: return
         val key = _state.value.filterKey
+        val strength = _state.value.strength
         viewModelScope.launch {
             _state.value = _state.value.copy(busy = true)
             val (bmp, cost) = withContext(Dispatchers.Default) {
-                ProcessEngine.applyFilter(src, key)
+                ProcessEngine.applyFilter(src, key, strength)
             }
             _state.value = _state.value.copy(current = bmp, costMs = cost, busy = false)
         }

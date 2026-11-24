@@ -12,6 +12,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.slider.Slider
 import com.pixellab.app.PixelLabApp
 import com.pixellab.app.R
 import com.pixellab.app.databinding.FragmentEditorBinding
@@ -33,6 +34,9 @@ class EditorFragment : Fragment() {
         EditorViewModel.Factory(requireContext().applicationContext as PixelLabApp)
     }
     private val chipAdapter = FilterChipAdapter { viewModel.selectFilter(it.key) }
+
+    /** 最近一次已展示的"处理后"位图（crossfade 判重用） */
+    private var lastAfterShown: android.graphics.Bitmap? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved: Bundle?): View {
         _binding = FragmentEditorBinding.inflate(inflater, container, false)
@@ -56,6 +60,18 @@ class EditorFragment : Fragment() {
         binding.btnCrop169.setOnClickListener { viewModel.crop("16:9") }
         binding.btnOcr.setOnClickListener { viewModel.runOcr() }
         binding.btnSave.setOnClickListener { viewModel.save() }
+
+        // 滤镜强度：拖动实时显示百分比，松手才触发一次重算（避免连续卷积掉帧）
+        binding.sliderStrength.addOnChangeListener { _, v, fromUser ->
+            if (fromUser) binding.tvStrengthVal.text = "${(v * 100).toInt()}%"
+        }
+        binding.sliderStrength.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) {}
+            override fun onStopTrackingTouch(slider: Slider) {
+                viewModel.setStrength(slider.value)
+                viewModel.applyFilter()
+            }
+        })
 
         // 点击前后图 → 全屏微信式查看器（捏合缩放 / 双击放大）
         binding.imgAfter.setOnClickListener {
@@ -90,7 +106,18 @@ class EditorFragment : Fragment() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { s ->
                     binding.imgBefore.setImageBitmap(s.source)
-                    binding.imgAfter.setImageBitmap(s.current)
+
+                    // 结果图 crossfade：只在 Bitmap 真的换了时淡入，重复 collect 不闪
+                    if (s.current !== lastAfterShown) {
+                        lastAfterShown = s.current
+                        binding.imgAfter.setImageBitmap(s.current)
+                        binding.imgAfter.alpha = 0f
+                        binding.imgAfter.animate().alpha(1f).setDuration(240).start()
+                    }
+
+                    // 滑动对比卡：两层像素级对齐，分割线由手势控制
+                    binding.compareSlider.setImages(s.source, s.current)
+
                     binding.progress.visibility = if (s.busy) View.VISIBLE else View.GONE
 
                     // 横幅参数徽章：尺寸 / 耗时 / 滤镜名

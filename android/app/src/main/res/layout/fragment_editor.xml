@@ -173,6 +173,42 @@
                     android:textSize="11sp" />
             </FrameLayout>
 
+            <!-- ═══ 滑动对比卡：拖分割线同屏看前后 ═══ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_card"
+                android:elevation="2dp"
+                android:orientation="vertical"
+                android:padding="10dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/editor_compare_title"
+                    android:textColor="@color/primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <com.pixellab.app.ui.editor.CompareSliderView
+                    android:id="@+id/compareSlider"
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:layout_marginTop="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="4dp"
+                    android:alpha="0.6"
+                    android:text="@string/editor_compare_hint"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
             <!-- ═══ 滤镜芯片行 ═══ -->
             <TextView
                 android:layout_width="wrap_content"
@@ -191,6 +227,44 @@
                 android:clipToPadding="false"
                 android:orientation="horizontal"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+            <!-- ═══ 滤镜强度：lerp 混合系数，松手才重新卷积 ═══ -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/editor_strength_label"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/sliderStrength"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:stepSize="0.05"
+                    android:value="1"
+                    android:valueFrom="0"
+                    android:valueTo="1" />
+
+                <TextView
+                    android:id="@+id/tvStrengthVal"
+                    android:layout_width="48dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:gravity="end"
+                    android:text="100%"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
             <!-- ═══ 几何操作行 ═══ -->
             <LinearLayout
