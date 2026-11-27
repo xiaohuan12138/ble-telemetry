@@ -39,6 +39,7 @@ data class EditorState(
     val base: Bitmap? = null,        // 几何变换后的底图（滤镜作用对象）
     val current: Bitmap? = null,     // 处理后（base + 参数重算的结果）
     val filterKey: String = "SHARPEN",
+    val customKernel: FloatArray? = null, // 自定义卷积核（filterKey == CUSTOM 时生效）
     val strength: Float = 1f,        // 滤镜强度 0~1（lerp 混合系数）
     val brightness: Int = 0,         // 亮度偏移 -100~100
     val contrast: Int = 0,           // 对比度 0~100（增益 0.5~1.5）
@@ -65,6 +66,7 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
         val base: Bitmap?,
         val current: Bitmap?,
         val filterKey: String,
+        val customKernel: FloatArray?,
         val strength: Float,
         val brightness: Int,
         val contrast: Int
@@ -78,7 +80,7 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
     private fun pushUndo(s: EditorState) {
         if (undoStack.size >= MAX_UNDO) undoStack.removeFirst()
         undoStack.addLast(
-            Snapshot(s.base, s.current, s.filterKey, s.strength, s.brightness, s.contrast)
+            Snapshot(s.base, s.current, s.filterKey, s.customKernel, s.strength, s.brightness, s.contrast)
         )
     }
 
@@ -90,6 +92,7 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
             base = snap.base,
             current = snap.current,
             filterKey = snap.filterKey,
+            customKernel = snap.customKernel,
             strength = snap.strength,
             brightness = snap.brightness,
             contrast = snap.contrast,
@@ -113,9 +116,22 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
         }
     }
 
-    /** 切换选中滤镜（只改选中态，点"应用"才真算） */
+    /** 切换选中滤镜（只改选中态，点"应用"才真算）；切换时清掉自定义核残留 */
     fun selectFilter(key: String) {
-        _state.value = _state.value.copy(filterKey = key)
+        _state.value = _state.value.copy(
+            filterKey = key,
+            customKernel = if (key == "CUSTOM") _state.value.customKernel else null
+        )
+    }
+
+    /**
+     * 自定义卷积核：用户在 9 宫格对话框输入 9 个数 → 生成新滤镜。
+     * 把"通用 3×3 引擎"的通用性真正暴露出来——锐化/边缘/浮雕/模糊
+     * 全部只是同一个卷积的不同权重组合，用户改数字就能亲眼验证。
+     */
+    fun applyCustomKernel(kernel: FloatArray) {
+        _state.value = _state.value.copy(filterKey = "CUSTOM", customKernel = kernel)
+        applyFilter()
     }
 
     /** 更新滤镜强度（只记值，松手后由 Fragment 触发重算） */
@@ -143,14 +159,16 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
         val base = s.base ?: return
         // 幂等判重：参数快照与上次应用完全相同且已有结果 → 直接跳过
         // （"强度 50% 连按两次"既不叠加、也不重复卷积/压栈）
-        val target = Snapshot(base, null, s.filterKey, s.strength, s.brightness, s.contrast)
+        val target = Snapshot(base, null, s.filterKey, s.customKernel, s.strength, s.brightness, s.contrast)
         if (lastApplied == target && s.current != null && s.current !== s.base) return
         pushUndo(s)
         lastApplied = target
         viewModelScope.launch {
             _state.value = _state.value.copy(busy = true)
             val (bmp, cost) = withContext(Dispatchers.Default) {
-                ProcessEngine.applyFilter(base, s.filterKey, s.strength, s.brightness, s.contrast)
+                ProcessEngine.applyFilter(
+                    base, s.filterKey, s.strength, s.brightness, s.contrast, s.customKernel
+                )
             }
             _state.value = _state.value.copy(
                 current = bmp, costMs = cost, busy = false, canUndo = true
@@ -169,7 +187,7 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
         viewModelScope.launch {
             val base = withContext(Dispatchers.Default) { ProcessEngine.rotate(src) }
             val (bmp, cost) = withContext(Dispatchers.Default) {
-                ProcessEngine.applyFilter(base, s.filterKey, s.strength, s.brightness, s.contrast)
+                ProcessEngine.applyFilter(base, s.filterKey, s.strength, s.brightness, s.contrast, s.customKernel)
             }
             _state.value = _state.value.copy(
                 base = base, current = bmp, costMs = cost,
@@ -186,7 +204,7 @@ class EditorViewModel(private val app: PixelLabApp) : ViewModel() {
         viewModelScope.launch {
             val base = withContext(Dispatchers.Default) { ProcessEngine.crop(src, ratio) }
             val (bmp, cost) = withContext(Dispatchers.Default) {
-                ProcessEngine.applyFilter(base, s.filterKey, s.strength, s.brightness, s.contrast)
+                ProcessEngine.applyFilter(base, s.filterKey, s.strength, s.brightness, s.contrast, s.customKernel)
             }
             _state.value = _state.value.copy(
                 base = base, current = bmp, costMs = cost,

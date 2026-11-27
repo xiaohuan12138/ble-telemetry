@@ -51,6 +51,37 @@
     <string name="editor_brightness_label">亮度</string>
     <string name="editor_contrast_label">对比度</string>
 
+    <!-- 算法横向对比 / 自定义核 / PDF 导出 -->
+    <string name="action_compare">算法对比</string>
+    <string name="action_export_pdf">导出 PDF</string>
+    <string name="compare_title">算法横向对比</string>
+    <string name="compare_subtitle">同一张图 × 四个滤波，结果与耗时同屏</string>
+    <string name="compare_cost_format">%1$s · %2$d ms</string>
+    <string name="compare_running">计算中 %1$d/4…</string>
+    <string name="kernel_title">自定义卷积核</string>
+    <string name="kernel_subtitle">输入 9 个权重（行优先），负数、小数都可以</string>
+    <string name="kernel_apply">用这个核处理</string>
+    <string name="kernel_hint">恒等核=不动；中心 9、邻居 -1 = 深度锐化；全 1/9 = 均值模糊</string>
+    <string name="kernel_invalid">请输入全部 9 个数字</string>
+    <string name="pdf_ready">PDF 报告已生成</string>
+    <string name="pdf_fail">PDF 生成失败</string>
+
+    <!-- 卷积滑窗演示页 -->
+    <string name="tab_demo">演示</string>
+    <string name="demo_title">卷积滑窗演示</string>
+    <string name="demo_subtitle">3×3 窗口逐像素滑动，右侧同步显示计算式与结果</string>
+    <string name="demo_play">播放</string>
+    <string name="demo_pause">暂停</string>
+    <string name="demo_step">单步</string>
+    <string name="demo_reset">复位</string>
+    <string name="demo_kernel_label">当前卷积核（锐化）</string>
+    <string name="demo_expr_label">当前像素计算式</string>
+
+    <!-- 滤镜性能排行榜 -->
+    <string name="stats_board_title">滤镜性能排行榜</string>
+    <string name="stats_board_hint">历史记录按滤镜聚合：柱长 = 平均耗时，右侧 = 平均 ms · 次数</string>
+    <string name="stats_board_empty">还没有带耗时数据的历史记录</string>
+
     <!-- 浮窗 AI 助手 -->
     <string name="assist_title">小像素助手</string>
     <string name="assist_subtitle">离线问答 · 边操作边提问</string>
@@ -105,7 +136,12 @@
     <string name="stats_exif">EXIF 元数据</string>
     <string name="stats_exif_empty">这张图没有 EXIF（可能是截图或已压缩转存）</string>
     <string name="stats_rgb_title">RGB 通道分布</string>
-    <string name="stats_rgb_hint">处理后的 R/G/B 三条直方图（对数刻度），红绿蓝叠加处自然混色</string>
+    <string name="stats_rgb_hint">处理后的 R/G/B 三通道并排柱状（对数刻度），每 4 级灰度合并一档</string>
+    <!-- 直方图稀疏分布说明：二值图/极稀疏图中间留白是数据本身特性，不是渲染故障 -->
+    <string name="stats_sparse_empty">无有效灰度数据</string>
+    <string name="stats_sparse_binary">二值图 · 两级灰度</string>
+    <string name="stats_sparse_few">仅 %1$d 级灰度</string>
+    <string name="stats_same_hint">处理前后灰度分布一致（如二值图锐化），故两列指标相同</string>
 
     <!-- 设置页 -->
     <string name="settings_title">设置</string>

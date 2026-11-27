@@ -39,6 +39,9 @@ class StatsFragment : Fragment() {
     /** 历史记录是否已加载过一次（避免 DB 异步加载前闪现空态） */
     private var recordsLoaded = false
 
+    /** 当前选中记录的 id（下拉框刷新后按 id 恢复选中，不跟位置走） */
+    private var selectedRecordId: Long? = null
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved: Bundle?): View {
         _binding = FragmentStatsBinding.inflate(inflater, container, false)
         return binding.root
@@ -51,6 +54,7 @@ class StatsFragment : Fragment() {
         binding.spinnerRecord.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
                 val rec = viewModel.state.value.records.getOrNull(pos) ?: return
+                selectedRecordId = rec.id
                 viewModel.select(rec)
             }
             override fun onNothingSelected(p: AdapterView<*>?) = Unit
@@ -59,34 +63,45 @@ class StatsFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { s ->
-                    // Spinner 选项 = "滤镜 · 时间"
+                    // Spinner 选项 = "滤镜 · 时间"；记录变化时重建 adapter，
+                    // 并按记录 id 恢复选中项（而不是跟位置走，避免错位选错记录）
                     if (s.records.isNotEmpty()) {
                         val labels = s.records.map {
                             "${it.filterName} · ${timeFmt.format(Date(it.createdAt))}"
                         }
-                        val adapter = ArrayAdapter(
-                            requireContext(), android.R.layout.simple_spinner_dropdown_item, labels
-                        )
-                        // 避免每次数据刷新都重置用户的选择
-                        if (binding.spinnerRecord.adapter == null) {
-                            binding.spinnerRecord.adapter = adapter
+                        val old = binding.spinnerRecord.adapter as? ArrayAdapter<String>
+                        val oldLabels = (0 until (old?.count ?: 0)).map { old!!.getItem(it).toString() }
+                        if (oldLabels != labels) {
+                            binding.spinnerRecord.adapter = ArrayAdapter(
+                                requireContext(), android.R.layout.simple_spinner_dropdown_item, labels
+                            )
+                            val idx = s.records.indexOfFirst { it.id == selectedRecordId }
+                            if (idx >= 0) binding.spinnerRecord.setSelection(idx, false)
                         }
                         recordsLoaded = true
                     }
 
                     val before = s.beforeStats
                     val after = s.afterStats
-                    // 前/后直方图双色：与指标表"处理前/处理后"列色一一对应
+                    // 前/后直方图双色：与指标表"处理前/处理后"列色一一对应；
+                    // 数据缺失（文件被清理等）时清空画布，不残留上一条记录的曲线
                     if (before != null) {
                         binding.histBefore.setStats(before, ContextCompat.getColor(requireContext(), R.color.tag_before))
+                    } else {
+                        binding.histBefore.clear()
                     }
                     if (after != null) {
                         binding.histAfter.setStats(after, ContextCompat.getColor(requireContext(), R.color.primary))
+                    } else {
+                        binding.histAfter.clear()
                     }
 
-                    // RGB 三通道叠画（处理后结果图）
-                    s.rgbStats?.let {
-                        binding.histRgb.setRgbStats(it.rBins, it.gBins, it.bBins)
+                    // RGB 三通道叠画（处理后结果图）；缺失同样清空
+                    val rgb = s.rgbStats
+                    if (rgb != null) {
+                        binding.histRgb.setRgbStats(rgb.rBins, rgb.gBins, rgb.bBins)
+                    } else {
+                        binding.histRgb.clear()
                     }
 
                     // 空态：记录加载完且为空 → 显示引导，隐藏全部统计卡片
@@ -95,6 +110,13 @@ class StatsFragment : Fragment() {
                     binding.statsContent.visibility = if (empty) View.GONE else View.VISIBLE
 
                     renderDetailTable(before, after)
+                    // 前后分布完全一致时给一句说明，避免「两列数值一样」被误读成统计失效
+                    val same = before != null && after != null &&
+                        before.bins.contentEquals(after.bins)
+                    binding.tvSameHint.visibility = if (same) View.VISIBLE else View.GONE
+
+                    // 滤镜性能排行榜（历史聚合）
+                    binding.boardChart.setRows(s.board)
 
                     if (s.exifText != null) {
                         binding.exifCard.visibility = View.VISIBLE
@@ -119,22 +141,27 @@ class StatsFragment : Fragment() {
         table.removeAllViews()
         if (before == null && after == null) return
 
-        fun fmt1(v: Float) = String.format(Locale.CHINA, "%.1f", v)
-        fun pct(v: Float) = String.format(Locale.CHINA, "%.1f%%", v * 100)
+        // 数据缺失显示 "–" 而不是 0（0 会让人误读成"指标真的是 0"）
+        fun fmt1(v: Float?) = if (v == null) "–" else String.format(Locale.CHINA, "%.1f", v)
+        fun fmt0(v: Float?) = if (v == null) "–" else String.format(Locale.CHINA, "%.0f", v)
+        fun pct(v: Float?) = if (v == null) "–" else String.format(Locale.CHINA, "%.1f%%", v * 100)
+        fun g(v: Int?) = v?.toString() ?: "–"
 
         val rows = listOf(
-            Triple("灰度均值 μ", fmt1(before?.mean ?: 0f), fmt1(after?.mean ?: 0f)),
-            Triple("标准差 σ（对比度）", fmt1(before?.stdDev ?: 0f), fmt1(after?.stdDev ?: 0f)),
-            Triple("最暗 / 最亮", "${before?.minGray ?: 0} / ${before?.maxGray ?: 0}",
-                "${after?.minGray ?: 0} / ${after?.maxGray ?: 0}"),
-            Triple("中位数", "${before?.median ?: 0}", "${after?.median ?: 0}"),
-            Triple("众数（出现最多灰度）", "${before?.mode ?: 0}", "${after?.mode ?: 0}"),
-            Triple("信息熵（bit/像素）", fmt1(before?.entropy ?: 0f), fmt1(after?.entropy ?: 0f)),
-            Triple("过曝率 >245", pct(before?.blowoutRatio ?: 0f), pct(after?.blowoutRatio ?: 0f)),
-            Triple("欠曝率 <10", pct(before?.darkRatio ?: 0f), pct(after?.darkRatio ?: 0f)),
+            Triple("灰度均值 μ", fmt1(before?.mean), fmt1(after?.mean)),
+            Triple("标准差 σ（对比度）", fmt1(before?.stdDev), fmt1(after?.stdDev)),
+            Triple("最暗 / 最亮",
+                "${g(before?.minGray)} / ${g(before?.maxGray)}",
+                "${g(after?.minGray)} / ${g(after?.maxGray)}"),
+            Triple("中位数", g(before?.median), g(after?.median)),
+            Triple("众数（出现最多灰度）", g(before?.mode), g(after?.mode)),
+            Triple("信息熵（bit/像素）", fmt1(before?.entropy), fmt1(after?.entropy)),
+            Triple("过曝率 >245", pct(before?.blowoutRatio), pct(after?.blowoutRatio)),
+            Triple("欠曝率 <10", pct(before?.darkRatio), pct(after?.darkRatio)),
+            // R/G/B 均值用整数 + 紧凑分隔符：三段小数 + 空格会让两列文字粘连重叠
             Triple("R / G / B 均值",
-                "${fmt1(before?.meanR ?: 0f)} / ${fmt1(before?.meanG ?: 0f)} / ${fmt1(before?.meanB ?: 0f)}",
-                "${fmt1(after?.meanR ?: 0f)} / ${fmt1(after?.meanG ?: 0f)} / ${fmt1(after?.meanB ?: 0f)}")
+                "${fmt0(before?.meanR)} / ${fmt0(before?.meanG)} / ${fmt0(before?.meanB)}",
+                "${fmt0(after?.meanR)} / ${fmt0(after?.meanG)} / ${fmt0(after?.meanB)}")
         )
         for ((label, bv, av) in rows) {
             table.addView(buildRow(label, bv, av))
@@ -149,6 +176,10 @@ class StatsFragment : Fragment() {
                 this.text = text
                 textSize = 12f
                 setTextColor(color)
+                // 单行 + 省略号：任何超长数值都只在自己的列内截断，
+                // 不会挤压/覆盖相邻列（R/G/B 均值这类长文本曾出现两列粘连）
+                setSingleLine(true)
+                ellipsize = android.text.TextUtils.TruncateAt.END
                 layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, weight)
                 if (bold) setTypeface(typeface, Typeface.BOLD)
             }

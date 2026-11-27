@@ -39,6 +39,11 @@
         android:label="@string/tab_stats" />
 
     <fragment
+        android:id="@+id/nav_demo"
+        android:name="com.pixellab.app.ui.demo.DemoFragment"
+        android:label="@string/tab_demo" />
+
+    <fragment
         android:id="@+id/nav_settings"
         android:name="com.pixellab.app.ui.settings.SettingsFragment"
         android:label="@string/tab_settings" />

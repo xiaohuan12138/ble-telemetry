@@ -2,6 +2,7 @@ package com.pixellab.app.image
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.BitmapRegionDecoder
 import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
 import java.io.InputStream
@@ -26,9 +27,14 @@ object Transformer {
     /** 缩略图最长边：列表页/小组件用 */
     const val THUMB_MAX_EDGE = 256
 
+    /** 超大图阈值：超过 2400 万像素（如 8000×3000 全景）改走分块解码通路 */
+    private const val HUGE_PIXELS = 24_000_000
+
     /**
-     * 安全解码：两次解码法 + inSampleSize 采样。
-     * inSampleSize 必须是 2 的幂（硬件层面按块采样），所以用 2 的幂向下取。
+     * 安全解码入口：普通图走两次解码法；超大图（>24MP）走 [BitmapRegionDecoder]
+     * 分块通路。BitmapRegionDecoder 允许"只解码感兴趣矩形 + 指定采样率"，
+     * 对全景图/长截图可以在读入前就按采样率缩小，比整图解码再缩省一个数量级的
+     * 峰值内存（OOM 防线的最后一道）。
      */
     fun decodeScaled(path: String, maxEdge: Int): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -45,6 +51,21 @@ object Transformer {
         val opts = BitmapFactory.Options().apply {
             inSampleSize = sample
             inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+        if (bounds.outWidth.toLong() * bounds.outHeight > HUGE_PIXELS) {
+            // 超大图：BitmapRegionDecoder 全区域 + 采样率解码，峰值内存更低
+            val decoder = runCatching { BitmapRegionDecoder.newInstance(path, true) }.getOrNull()
+            if (decoder != null) {
+                try {
+                    return decoder.decodeRegion(
+                        android.graphics.Rect(0, 0, bounds.outWidth, bounds.outHeight), opts
+                    )
+                } finally {
+                    @Suppress("DEPRECATION")
+                    decoder.recycle()
+                }
+            }
+            // 分块解码失败（格式不支持等）→ 回退普通解码
         }
         return BitmapFactory.decodeFile(path, opts)
     }

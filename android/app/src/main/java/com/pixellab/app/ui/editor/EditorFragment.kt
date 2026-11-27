@@ -16,7 +16,7 @@ import com.google.android.material.slider.Slider
 import com.pixellab.app.PixelLabApp
 import com.pixellab.app.R
 import com.pixellab.app.databinding.FragmentEditorBinding
-import com.pixellab.app.image.FilterPreset
+import com.pixellab.app.image.FilterCatalog
 import com.pixellab.app.share.CardGenerator
 import com.pixellab.app.ui.gallery.EditorArgs
 import com.pixellab.app.ui.viewer.PhotoViewerDialog
@@ -26,14 +26,21 @@ import kotlinx.coroutines.launch
  * 编辑页：滤镜/几何变换/OCR/保存/分享。
  * 全部状态来自 EditorViewModel 的 StateFlow，Fragment 只做"渲染 + 转发点击"。
  */
-class EditorFragment : Fragment() {
+class EditorFragment : Fragment(), CustomKernelDialog.KernelApplier {
 
     private var _binding: FragmentEditorBinding? = null
     private val binding get() = _binding!!
     private val viewModel: EditorViewModel by viewModels {
         EditorViewModel.Factory(requireContext().applicationContext as PixelLabApp)
     }
-    private val chipAdapter = FilterChipAdapter { viewModel.selectFilter(it.key) }
+    /** "自定义核"芯片不走 selectFilter，而是弹出 9 宫格输入对话框 */
+    private val chipAdapter = FilterChipAdapter { chip ->
+        if (chip.key == "CUSTOM") {
+            CustomKernelDialog().show(childFragmentManager, "kernel")
+        } else {
+            viewModel.selectFilter(chip.key)
+        }
+    }
 
     /** 最近一次已展示的"处理后"位图（crossfade 判重用） */
     private var lastAfterShown: android.graphics.Bitmap? = null
@@ -61,6 +68,11 @@ class EditorFragment : Fragment() {
         binding.btnCrop169.setOnClickListener { viewModel.crop("16:9") }
         binding.btnOcr.setOnClickListener { viewModel.runOcr() }
         binding.btnSave.setOnClickListener { viewModel.save() }
+        binding.btnCompare.setOnClickListener {
+            val base = viewModel.state.value.base ?: return@setOnClickListener
+            CompareDialog.newInstance(base).show(childFragmentManager, "compare")
+        }
+        binding.btnPdf.setOnClickListener { exportPdf() }
 
         // 滤镜强度：拖动实时显示百分比，松手才触发一次重算（避免连续卷积掉帧）
         binding.sliderStrength.addOnChangeListener { _, v, fromUser ->
@@ -186,15 +198,38 @@ class EditorFragment : Fragment() {
         }
     }
 
-    /** 滤镜显示名：卷积预设走枚举的 displayName，特殊实现单独给名 */
-    private fun filterDisplayName(key: String?): String = when (key) {
-        "GAUSSIAN" -> getString(R.string.filter_gaussian)
-        "GRAYSCALE" -> getString(R.string.filter_grayscale)
-        "EQUALIZE" -> getString(R.string.filter_equalize)
-        "OTSU" -> getString(R.string.filter_otsu)
-        "MEDIAN" -> getString(R.string.filter_median)
-        else -> FilterPreset.fromName(key).displayName
+    /** 自定义核对话框回调：拿到 9 个权重直接进管线重算 */
+    override fun applyKernel(kernel: FloatArray) {
+        viewModel.applyCustomKernel(kernel)
     }
+
+    /**
+     * 导出 PDF 实验报告：处理前后对比图 + 参数 + 耗时 + 直方图 + 全套指标一键成文。
+     * 统计和 PDF 绘制都在 IO/Default 池跑，主线程只收文件句柄调起分享。
+     */
+    private fun exportPdf() {
+        val s = viewModel.state.value
+        val before = s.base ?: return
+        val after = s.current ?: return
+        binding.progress.visibility = View.VISIBLE
+        viewLifecycleOwner.lifecycleScope.launch {
+            val file = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.pixellab.app.share.ReportGenerator.generate(
+                    requireContext(), before, after,
+                    s.filterKey, s.strength, s.brightness, s.contrast, s.costMs
+                )
+            }
+            binding.progress.visibility = View.GONE
+            Snackbar.make(binding.root, R.string.pdf_ready, Snackbar.LENGTH_SHORT).show()
+            com.pixellab.app.share.ReportGenerator.sharePdfReport(
+                requireContext(), before, after,
+                s.filterKey, s.strength, s.brightness, s.contrast, s.costMs
+            )
+        }
+    }
+
+    /** 滤镜显示名：统一走 FilterCatalog（芯片/徽章/历史/PDF 一处维护） */
+    private fun filterDisplayName(key: String?): String = FilterCatalog.displayName(key)
 
     override fun onDestroyView() {
         super.onDestroyView()

@@ -454,6 +454,31 @@
                     app:tint="#FFFFFFFF" />
             </LinearLayout>
 
+            <!-- ═══ 分析工具行：算法横向对比 + PDF 实验报告导出 ═══ -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnCompare"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:text="@string/action_compare" />
+
+                <Button
+                    android:id="@+id/btnPdf"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="0dp"
+                    android:layout_height="54dp"
+                    android:layout_weight="1"
+                    android:text="@string/action_export_pdf" />
+            </LinearLayout>
+
             <!-- ═══ OCR 结果卡 ═══ -->
             <LinearLayout
                 android:id="@+id/ocrCard"

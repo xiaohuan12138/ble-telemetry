@@ -8,31 +8,22 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.pixellab.app.R
+import com.pixellab.app.image.FilterCatalog
 
 /** 滤镜芯片条的数据项：key 传给引擎，label 显示给用户 */
 data class FilterChip(val key: String, val label: String)
 
 /**
- * 滤镜选择芯片条。列表 = 5 个卷积预设 + 高斯 + 灰度，
- * "灰度"和"高斯"走 Convolver 的专门实现，其余走通用 3×3 卷积。
+ * 滤镜选择芯片条。清单统一来自 [FilterCatalog]（单一数据源）：
+ * 卷积预设 + Convolver 专门实现 + A 组硬核算法 + 插值对比 + 自定义核。
  */
 class FilterChipAdapter(
     private val onSelect: (FilterChip) -> Unit
 ) : ListAdapter<FilterChip, FilterChipAdapter.VH>(DIFF) {
 
     companion object {
-        val DEFAULT = listOf(
-            FilterChip("SHARPEN", "锐化"),
-            FilterChip("MEAN_BLUR", "均值模糊"),
-            FilterChip("GAUSSIAN", "高斯模糊"),
-            FilterChip("MEDIAN", "中值滤波"),
-            FilterChip("EDGE", "边缘检测"),
-            FilterChip("SOBEL_V", "垂直边缘"),
-            FilterChip("EMBOSS", "浮雕"),
-            FilterChip("GRAYSCALE", "灰度"),
-            FilterChip("EQUALIZE", "直方图均衡"),
-            FilterChip("OTSU", "自动二值化")
-        )
+        val DEFAULT: List<FilterChip> =
+            FilterCatalog.chips.map { FilterChip(it.key, it.label) }
         private val DIFF = object : DiffUtil.ItemCallback<FilterChip>() {
             override fun areItemsTheSame(a: FilterChip, b: FilterChip) = a.key == b.key
             override fun areContentsTheSame(a: FilterChip, b: FilterChip) = a == b

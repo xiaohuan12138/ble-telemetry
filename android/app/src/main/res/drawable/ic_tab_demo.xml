@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 底部导航"演示"Tab 图标：3×3 卷积网格示意 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M4,4h5v5h-5zM10.5,4h5v5h-5zM17,4h5v5h-5zM4,10.5h5v5h-5zM10.5,10.5h5v5h-5zM17,10.5h5v5h-5zM4,17h5v5h-5zM10.5,17h5v5h-5zM17,17h5v5h-5z"
+        android:fillAlpha="0.35" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M10.5,10.5h5v5h-5z" />
+</vector>

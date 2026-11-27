@@ -10,7 +10,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -20,7 +19,9 @@ data class StatsState(
     val beforeStats: Histogram.Stats? = null,
     val afterStats: Histogram.Stats? = null,
     val rgbStats: Histogram.RgbStats? = null,
-    val exifText: String? = null
+    val exifText: String? = null,
+    /** 滤镜性能排行榜：历史记录按滤镜聚合（平均耗时 + 次数），柱状图数据源 */
+    val board: List<BarChartView.Row> = emptyList()
 )
 
 class StatsViewModel(private val app: PixelLabApp) : ViewModel() {
@@ -28,13 +29,33 @@ class StatsViewModel(private val app: PixelLabApp) : ViewModel() {
     private val _state = MutableStateFlow(StatsState())
     val state: StateFlow<StatsState> = _state.asStateFlow()
 
-    /** 加载记录下拉列表 */
+    /**
+     * 持续收集历史记录流（Room Flow）：
+     * 编辑页保存新记录后统计页下拉框实时刷新，不用退出重进。
+     */
     fun loadRecords() {
-        viewModelScope.launch {
-            val list = app.db.photoDao().observeAll().first()
-            _state.value = _state.value.copy(records = list)
+        if (recordsJob != null) return   // 已在收集，避免重复订阅
+        recordsJob = viewModelScope.launch {
+            app.db.photoDao().observeAll().collect { list ->
+                _state.value = _state.value.copy(records = list, board = aggregate(list))
+            }
         }
     }
+
+    /**
+     * 滤镜性能聚合：历史记录按滤镜名分组 → 平均耗时 + 使用次数。
+     * 只统计真实处理记录（costMs > 0），空串 filterName（纯几何变换）跳过。
+     */
+    private fun aggregate(list: List<PhotoEntity>): List<BarChartView.Row> {
+        if (list.isEmpty()) return emptyList()
+        return list.filter { it.filterName.isNotBlank() && it.costMs > 0 }
+            .groupBy { it.filterName }
+            .map { (name, group) ->
+                BarChartView.Row(name, group.map { it.costMs }.average().toFloat(), group.size)
+            }
+    }
+
+    private var recordsJob: kotlinx.coroutines.Job? = null
 
     /**
      * 选中一条记录：分别统计"原图"和"结果图"。

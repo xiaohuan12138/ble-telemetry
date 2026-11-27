@@ -34,11 +34,24 @@ class Convolver {
      * @return        新的像素数组（不修改入参，方便"处理前/后"对比展示）
      */
     fun apply3x3(pixels: IntArray, width: Int, height: Int, kernel: FloatArray): IntArray {
-        require(kernel.size == 9) { "3x3 卷积核长度必须是 9，实际 ${kernel.size}" }
         val out = IntArray(pixels.size)
+        apply3x3Range(pixels, out, width, height, 0, height, kernel)
+        return out
+    }
+
+    /**
+     * 3×3 卷积（行范围版）：只处理 [y0, y1) 行、写进调用方给的 out。
+     * 每行的输出只依赖输入数组（out 只写自己的行），行与行天然独立 →
+     * [ProcessEngine] 把图片按行切成 N 块交给 N 个线程并行，结果拼回去语义完全一致。
+     */
+    fun apply3x3Range(
+        pixels: IntArray, out: IntArray, width: Int, height: Int,
+        y0: Int, y1: Int, kernel: FloatArray
+    ) {
+        require(kernel.size == 9) { "3x3 卷积核长度必须是 9，实际 ${kernel.size}" }
 
         // 逐行扫描，y/x 是"当前像素"，对每个像素用核的 9 个权重取邻居加权求和
-        for (y in 0 until height) {
+        for (y in y0 until y1) {
             // 预先算好三个行号，clamp 到边界：越界时复制边缘行，避免黑边
             val yUp = (y - 1).coerceIn(0, height - 1)
             val yMid = y
@@ -68,7 +81,6 @@ class Convolver {
                 out[y * width + x] = alpha or (r shl 16) or (g shl 8) or b
             }
         }
-        return out
     }
 
     /**
@@ -294,11 +306,19 @@ class Convolver {
      */
     fun medianFilter(pixels: IntArray, width: Int, height: Int): IntArray {
         val out = IntArray(pixels.size)
+        medianFilterRange(pixels, out, width, height, 0, height)
+        return out
+    }
+
+    /** 中值滤波（行范围版）：与 apply3x3Range 同样按行独立，支持多线程分块 */
+    fun medianFilterRange(
+        pixels: IntArray, out: IntArray, width: Int, height: Int, y0: Int, y1: Int
+    ) {
         // 三个通道的滑动窗口在行循环外预分配：整个滤波过程零临时对象
         val vr = IntArray(9)
         val vg = IntArray(9)
         val vb = IntArray(9)
-        for (y in 0 until height) {
+        for (y in y0 until y1) {
             val yUp = (y - 1).coerceIn(0, height - 1)
             val yDown = (y + 1).coerceIn(0, height - 1)
             val rows = intArrayOf(yUp, y, yDown)   // 每行建一次，不进像素循环
@@ -327,7 +347,6 @@ class Convolver {
                 out[y * width + x] = alpha or (vr[4] shl 16) or (vg[4] shl 8) or vb[4]
             }
         }
-        return out
     }
 
     /** 9 元素插入排序（原地）。n 极小，插入排序比快排常数更小；中位即下标 4 */
