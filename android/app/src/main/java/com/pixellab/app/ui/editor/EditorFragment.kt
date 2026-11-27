@@ -54,6 +54,7 @@ class EditorFragment : Fragment() {
 
         binding.btnApply.setOnClickListener { viewModel.applyFilter() }
         binding.btnReset.setOnClickListener { viewModel.reset() }
+        binding.btnUndo.setOnClickListener { viewModel.undo() }
         binding.btnRotate.setOnClickListener { viewModel.rotate() }
         binding.btnCrop11.setOnClickListener { viewModel.crop("1:1") }
         binding.btnCrop43.setOnClickListener { viewModel.crop("4:3") }
@@ -73,6 +74,28 @@ class EditorFragment : Fragment() {
             }
         })
 
+        // 亮度 / 对比度：线性点操作 y = a·x + b，与滤镜一起在重算管线里生效
+        binding.sliderBrightness.addOnChangeListener { _, v, fromUser ->
+            if (fromUser) binding.tvBrightnessVal.text = "${v.toInt()}"
+        }
+        binding.sliderBrightness.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) {}
+            override fun onStopTrackingTouch(slider: Slider) {
+                viewModel.setBrightness(slider.value.toInt())
+                viewModel.applyFilter()
+            }
+        })
+        binding.sliderContrast.addOnChangeListener { _, v, fromUser ->
+            if (fromUser) binding.tvContrastVal.text = "${v.toInt()}"
+        }
+        binding.sliderContrast.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) {}
+            override fun onStopTrackingTouch(slider: Slider) {
+                viewModel.setContrast(slider.value.toInt())
+                viewModel.applyFilter()
+            }
+        })
+
         // 点击前后图 → 全屏微信式查看器（捏合缩放 / 双击放大）
         binding.imgAfter.setOnClickListener {
             val s = viewModel.state.value
@@ -84,7 +107,7 @@ class EditorFragment : Fragment() {
         }
         binding.imgBefore.setOnClickListener {
             val s = viewModel.state.value
-            val bmp = s.source ?: return@setOnClickListener
+            val bmp = s.base ?: return@setOnClickListener
             PhotoViewerDialog.newInstance(
                 bmp, getString(R.string.editor_viewer_caption,
                     getString(R.string.label_before), getString(R.string.editor_cost_idle))
@@ -94,7 +117,7 @@ class EditorFragment : Fragment() {
         // P4：用"处理前 + 处理后 + 参数"生成对比卡片并调起系统分享
         binding.btnShare.setOnClickListener {
             val s = viewModel.state.value
-            val source = s.source ?: return@setOnClickListener
+            val source = s.base ?: return@setOnClickListener
             val result = s.current ?: return@setOnClickListener
             Snackbar.make(binding.root, R.string.editor_share_ready, Snackbar.LENGTH_SHORT).show()
             CardGenerator.shareResultCard(
@@ -105,7 +128,9 @@ class EditorFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { s ->
-                    binding.imgBefore.setImageBitmap(s.source)
+                    // "处理前"对比基准 = base（几何变换后的底图），
+                    // 对比滑块左右才是同一张图、同一个坐标系下的前后差异
+                    binding.imgBefore.setImageBitmap(s.base)
 
                     // 结果图 crossfade：只在 Bitmap 真的换了时淡入，重复 collect 不闪
                     if (s.current !== lastAfterShown) {
@@ -116,9 +141,10 @@ class EditorFragment : Fragment() {
                     }
 
                     // 滑动对比卡：两层像素级对齐，分割线由手势控制
-                    binding.compareSlider.setImages(s.source, s.current)
+                    binding.compareSlider.setImages(s.base, s.current)
 
                     binding.progress.visibility = if (s.busy) View.VISIBLE else View.GONE
+                    binding.btnUndo.isEnabled = s.canUndo
 
                     // 横幅参数徽章：尺寸 / 耗时 / 滤镜名
                     val w = s.current?.width ?: 0
@@ -130,6 +156,16 @@ class EditorFragment : Fragment() {
                     binding.badgeFilter.text = filterDisplayName(s.filterKey)
 
                     chipAdapter.selectedKey = s.filterKey
+
+                    // 撤销/还原后把三个滑块与状态快照同步（fromUser=false 不触发重算，避免回环）
+                    if (binding.sliderStrength.value != s.strength) binding.sliderStrength.value = s.strength
+                    if (binding.sliderBrightness.value != s.brightness.toFloat())
+                        binding.sliderBrightness.value = s.brightness.toFloat()
+                    if (binding.sliderContrast.value != s.contrast.toFloat())
+                        binding.sliderContrast.value = s.contrast.toFloat()
+                    binding.tvStrengthVal.text = "${(s.strength * 100).toInt()}%"
+                    binding.tvBrightnessVal.text = "${s.brightness}"
+                    binding.tvContrastVal.text = "${s.contrast}"
 
                     // OCR 结果卡：有文字就展开，识别过但没文字显示"空"
                     if (s.ocrText != null) {
@@ -150,10 +186,13 @@ class EditorFragment : Fragment() {
         }
     }
 
-    /** 滤镜显示名：卷积预设走枚举的 displayName，高斯/灰度是专门实现单独给名 */
+    /** 滤镜显示名：卷积预设走枚举的 displayName，特殊实现单独给名 */
     private fun filterDisplayName(key: String?): String = when (key) {
         "GAUSSIAN" -> getString(R.string.filter_gaussian)
         "GRAYSCALE" -> getString(R.string.filter_grayscale)
+        "EQUALIZE" -> getString(R.string.filter_equalize)
+        "OTSU" -> getString(R.string.filter_otsu)
+        "MEDIAN" -> getString(R.string.filter_median)
         else -> FilterPreset.fromName(key).displayName
     }
 

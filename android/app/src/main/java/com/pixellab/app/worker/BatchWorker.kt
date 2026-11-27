@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.pixellab.app.PixelLabApp
+import com.pixellab.app.R
 import com.pixellab.app.data.db.PhotoEntity
 import com.pixellab.app.image.ProcessEngine
 import com.pixellab.app.image.Transformer
@@ -78,10 +79,40 @@ class BatchWorker(appContext: Context, params: WorkerParameters) :
             )
         }
 
-        // 批量完成后刷新小组件
+        // 批量完成后刷新小组件 + 发系统通知（后台任务闭环：用户离开页面也能知道结果）
         RecentWidgetProvider.notifyDataChanged(applicationContext)
+        notifyDone(ok, paths.size)
 
         return Result.success(androidx.work.workDataOf(KEY_OK to ok))
+    }
+
+    /**
+     * 完成通知：Android 8.0+ 必须挂 NotificationChannel；
+     * Android 13+ 通知是运行时权限，没授权就静默跳过（不崩溃、不打扰）。
+     */
+    private fun notifyDone(ok: Int, total: Int) {
+        val ctx = applicationContext
+        val manager = androidx.core.app.NotificationManagerCompat.from(ctx)
+        val channel = android.app.NotificationChannel(
+            CHANNEL_ID,
+            ctx.getString(R.string.batch_notify_channel),
+            android.app.NotificationManager.IMPORTANCE_DEFAULT
+        )
+        manager.createNotificationChannel(channel)
+        // Android 13+ 通知是运行时权限：未授权就静默跳过（不崩溃、不打扰）
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            androidx.core.app.ActivityCompat.checkSelfPermission(
+                ctx, android.Manifest.permission.POST_NOTIFICATIONS
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return
+
+        val notification = androidx.core.app.NotificationCompat.Builder(ctx, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle(ctx.getString(R.string.batch_notify_title))
+            .setContentText(ctx.getString(R.string.batch_notify_text, ok, total))
+            .setAutoCancel(true)
+            .build()
+        runCatching { manager.notify(NOTIFY_ID, notification) }   // 通知失败不影响任务结果
     }
 
     companion object {
@@ -90,5 +121,8 @@ class BatchWorker(appContext: Context, params: WorkerParameters) :
         const val KEY_DONE = "done"
         const val KEY_TOTAL = "total"
         const val KEY_OK = "ok"
+
+        private const val CHANNEL_ID = "batch_done"
+        private const val NOTIFY_ID = 1001
     }
 }

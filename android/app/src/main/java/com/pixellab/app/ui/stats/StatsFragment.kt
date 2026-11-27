@@ -84,6 +84,11 @@ class StatsFragment : Fragment() {
                         binding.histAfter.setStats(after, ContextCompat.getColor(requireContext(), R.color.primary))
                     }
 
+                    // RGB 三通道叠画（处理后结果图）
+                    s.rgbStats?.let {
+                        binding.histRgb.setRgbStats(it.rBins, it.gBins, it.bBins)
+                    }
+
                     // 空态：记录加载完且为空 → 显示引导，隐藏全部统计卡片
                     val empty = recordsLoaded && s.records.isEmpty()
                     binding.emptyStats.visibility = if (empty) View.VISIBLE else View.GONE

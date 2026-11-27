@@ -9,6 +9,9 @@
 
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- 批量处理完成后的系统通知（Android 13+ 需运行时请求） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- Android 12 及以下读媒体仍需存储权限；13+ 用照片选择器，无需权限 -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"

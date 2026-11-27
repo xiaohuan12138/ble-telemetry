@@ -14,11 +14,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** 统计页状态：记录列表 + 当前选中记录的前/后统计与 EXIF 文本 */
+/** 统计页状态：记录列表 + 当前选中记录的前/后统计、RGB 分通道统计与 EXIF 文本 */
 data class StatsState(
     val records: List<PhotoEntity> = emptyList(),
     val beforeStats: Histogram.Stats? = null,
     val afterStats: Histogram.Stats? = null,
+    val rgbStats: Histogram.RgbStats? = null,
     val exifText: String? = null
 )
 
@@ -41,7 +42,7 @@ class StatsViewModel(private val app: PixelLabApp) : ViewModel() {
      */
     fun select(photo: PhotoEntity) {
         viewModelScope.launch {
-            val (before, after, exif) = withContext(Dispatchers.Default) {
+            val (before, after, rgb, exif) = withContext(Dispatchers.Default) {
                 val hist = Histogram()
                 val beforeBmp = BitmapFactory.decodeFile(photo.sourcePath)
                 val afterBmp = BitmapFactory.decodeFile(photo.resultPath)
@@ -55,6 +56,12 @@ class StatsViewModel(private val app: PixelLabApp) : ViewModel() {
                     it.getPixels(px, 0, it.width, 0, 0, it.width, it.height)
                     hist.compute(px)
                 }
+                // RGB 分通道直方图：统计"处理后"结果图（色彩分布的变化最有看头）
+                val rgb = afterBmp?.let {
+                    val px = IntArray(it.width * it.height)
+                    it.getPixels(px, 0, it.width, 0, 0, it.width, it.height)
+                    hist.computeRgb(px)
+                }
                 val exif = runCatching {
                     val e = androidx.exifinterface.media.ExifInterface(photo.sourcePath)
                     buildString {
@@ -67,13 +74,16 @@ class StatsViewModel(private val app: PixelLabApp) : ViewModel() {
                         appendLine("尺寸: ${e.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_WIDTH)}×${e.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_IMAGE_LENGTH)}")
                     }.trim()
                 }.getOrDefault(null)
-                Triple(beforeStats, afterStats, exif)
+                Quad(beforeStats, afterStats, rgb, exif)
             }
             _state.value = _state.value.copy(
-                beforeStats = before, afterStats = after, exifText = exif
+                beforeStats = before, afterStats = after, rgbStats = rgb, exifText = exif
             )
         }
     }
+
+    /** 四元组：协程标准库只有 Triple，这里自带一个局部封装 */
+    private data class Quad<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
     companion object {
         fun Factory(app: PixelLabApp) = object : androidx.lifecycle.ViewModelProvider.Factory {

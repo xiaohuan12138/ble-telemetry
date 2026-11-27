@@ -25,10 +25,13 @@ class FilterChipAdapter(
             FilterChip("SHARPEN", "锐化"),
             FilterChip("MEAN_BLUR", "均值模糊"),
             FilterChip("GAUSSIAN", "高斯模糊"),
+            FilterChip("MEDIAN", "中值滤波"),
             FilterChip("EDGE", "边缘检测"),
             FilterChip("SOBEL_V", "垂直边缘"),
             FilterChip("EMBOSS", "浮雕"),
-            FilterChip("GRAYSCALE", "灰度")
+            FilterChip("GRAYSCALE", "灰度"),
+            FilterChip("EQUALIZE", "直方图均衡"),
+            FilterChip("OTSU", "自动二值化")
         )
         private val DIFF = object : DiffUtil.ItemCallback<FilterChip>() {
             override fun areItemsTheSame(a: FilterChip, b: FilterChip) = a.key == b.key

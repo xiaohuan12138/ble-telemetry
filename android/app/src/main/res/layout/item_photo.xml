@@ -19,6 +19,15 @@
         android:contentDescription="@string/gallery_title"
         app:srcCompat="@drawable/ic_tab_gallery" />
 
+    <!-- 多选勾选指示：选择模式下选中显示，非选择模式 gone -->
+    <View
+        android:id="@+id/checkIndicator"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_dot"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"

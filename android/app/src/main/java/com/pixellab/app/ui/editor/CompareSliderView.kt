@@ -121,6 +121,8 @@ class CompareSliderView @JvmOverloads constructor(
                 }
             }
             MotionEvent.ACTION_UP -> {
+                // 显式归还拦截权：虽然 UP/CANCEL 后父容器会自动重置，但成对调用是好习惯
+                parent?.requestDisallowInterceptTouchEvent(false)
                 if (!tracking) {
                     // 轻点也把分割线移到点击处，符合直觉
                     fraction = (event.x / width).coerceIn(0.02f, 0.98f)
@@ -128,7 +130,10 @@ class CompareSliderView @JvmOverloads constructor(
                 }
                 tracking = false
             }
-            MotionEvent.ACTION_CANCEL -> tracking = false
+            MotionEvent.ACTION_CANCEL -> {
+                parent?.requestDisallowInterceptTouchEvent(false)
+                tracking = false
+            }
         }
         return true
     }

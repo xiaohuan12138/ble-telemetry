@@ -33,6 +33,7 @@
     <string name="action_save">保存到历史</string>
     <string name="action_share_card">生成分享卡片</string>
     <string name="action_reset">还原</string>
+    <string name="action_undo">撤销</string>
     <string name="editor_processing">处理中…（Dispatchers.Default 并行计算）</string>
     <string name="editor_ocr_running">识别中…</string>
     <string name="editor_ocr_result">识别结果</string>
@@ -47,6 +48,8 @@
     <string name="editor_compare_title">滑动对比</string>
     <string name="editor_compare_hint">左右拖动分割线，同屏对比处理前后</string>
     <string name="editor_strength_label">滤镜强度</string>
+    <string name="editor_brightness_label">亮度</string>
+    <string name="editor_contrast_label">对比度</string>
 
     <!-- 浮窗 AI 助手 -->
     <string name="assist_title">小像素助手</string>
@@ -75,6 +78,19 @@
     <string name="filter_emboss">浮雕</string>
     <string name="filter_sobel_v">垂直边缘</string>
     <string name="filter_grayscale">灰度</string>
+    <string name="filter_equalize">直方图均衡</string>
+    <string name="filter_otsu">自动二值化</string>
+    <string name="filter_median">中值滤波</string>
+
+    <!-- 批量完成通知 -->
+    <string name="batch_notify_channel">批量处理通知</string>
+    <string name="batch_notify_title">批量处理完成</string>
+    <string name="batch_notify_text">成功 %1$d / 共 %2$d 张，已存入历史记录</string>
+
+    <!-- 图库多选 -->
+    <string name="gallery_selected_count">已选 %1$d 张</string>
+    <string name="gallery_delete_selected">删除所选</string>
+    <string name="gallery_cancel_selection">取消</string>
 
     <!-- 统计页 -->
     <string name="stats_title">图像统计</string>
@@ -88,6 +104,8 @@
     <string name="stats_metrics_title">量化指标对比</string>
     <string name="stats_exif">EXIF 元数据</string>
     <string name="stats_exif_empty">这张图没有 EXIF（可能是截图或已压缩转存）</string>
+    <string name="stats_rgb_title">RGB 通道分布</string>
+    <string name="stats_rgb_hint">处理后的 R/G/B 三条直方图（对数刻度），红绿蓝叠加处自然混色</string>
 
     <!-- 设置页 -->
     <string name="settings_title">设置</string>

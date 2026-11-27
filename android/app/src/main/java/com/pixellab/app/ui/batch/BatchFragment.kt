@@ -46,6 +46,11 @@ class BatchFragment : Fragment() {
         }
     }
 
+    /** 通知权限（Android 13+）：授权回调后再启动任务，避免 Worker 跑完时权限还没生效 */
+    private val requestNotify = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { _ -> startBatch() }
+
     /** 简单行适配器：文件名 + 状态 */
     private val rowAdapter = object : RecyclerView.Adapter<RowVH>() {
         private val items = mutableListOf<Pair<String, String>>()   // 名称 to 状态
@@ -88,14 +93,16 @@ class BatchFragment : Fragment() {
         }
 
         binding.btnStart.setOnClickListener {
-            // 提交前把 Uri 复制成本地文件（IO 池），然后交给 WorkManager
-            val uris = viewModel.state.value.picked
-            viewLifecycleOwner.lifecycleScope.launch {
-                val paths = withContext(Dispatchers.IO) { copyUris(uris) }
-                rowAdapter.replace(paths.map {
-                    it.substringAfterLast('/') to getString(R.string.action_apply)
-                })
-                viewModel.start(paths)
+            // Android 13+ 先请求通知权限，授权回调后再启动任务
+            //（否则 Worker 可能在权限弹窗期间就跑完，完成时检查权限仍为未授权 → 通知被跳过）
+            if (android.os.Build.VERSION.SDK_INT >= 33 &&
+                androidx.core.content.ContextCompat.checkSelfPermission(
+                    requireContext(), android.Manifest.permission.POST_NOTIFICATIONS
+                ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                requestNotify.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                startBatch()
             }
         }
 
@@ -124,6 +131,18 @@ class BatchFragment : Fragment() {
                     }
                 }
             }
+        }
+    }
+
+    /** 提交前把 Uri 复制成本地文件（IO 池），然后交给 WorkManager */
+    private fun startBatch() {
+        val uris = viewModel.state.value.picked
+        viewLifecycleOwner.lifecycleScope.launch {
+            val paths = withContext(Dispatchers.IO) { copyUris(uris) }
+            rowAdapter.replace(paths.map {
+                it.substringAfterLast('/') to getString(R.string.action_apply)
+            })
+            viewModel.start(paths)
         }
     }
 

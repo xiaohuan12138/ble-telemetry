@@ -34,6 +34,19 @@ class GalleryViewModel(app: PixelLabApp) : ViewModel() {
         }
     }
 
+    /** 多选批量删除：Room 行 + 结果图/缩略图文件一起删 */
+    fun deleteMany(app: PixelLabApp, photos: List<PhotoEntity>) {
+        viewModelScope.launch {
+            photos.forEach { photo ->
+                dao.deleteById(photo.id)
+                runCatching {
+                    java.io.File(photo.resultPath).delete()
+                    java.io.File(photo.thumbPath).delete()
+                }
+            }
+        }
+    }
+
     companion object {
         fun Factory(app: PixelLabApp) = object : androidx.lifecycle.ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")

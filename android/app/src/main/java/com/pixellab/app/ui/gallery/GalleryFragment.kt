@@ -73,6 +73,7 @@ class GalleryFragment : Fragment() {
         adapter = PhotoAdapter(
             onOpen = { photo ->
                 // 带着结果图路径进编辑页，可继续叠加处理
+                // （多选模式下的点按在 Adapter 内部拦截为"切换勾选"，不会走到这里）
                 findNavController().navigate(
                     R.id.action_gallery_to_editor,
                     EditorArgs(photo.sourcePath, photo.id).toBundle()
@@ -80,10 +81,23 @@ class GalleryFragment : Fragment() {
             },
             onDelete = { photo ->
                 viewModel.delete(requireContext().applicationContext as PixelLabApp, photo)
+            },
+            onSelectionChanged = { count ->
+                binding.selectionBar.visibility =
+                    if (count > 0) View.VISIBLE else View.GONE
+                binding.tvSelectionCount.text = getString(R.string.gallery_selected_count, count)
             }
         )
         binding.recycler.layoutManager = LinearLayoutManager(requireContext())
         binding.recycler.adapter = adapter
+
+        binding.btnDeleteSelected.setOnClickListener {
+            val photos = adapter.selectedPhotos()
+            if (photos.isEmpty()) return@setOnClickListener
+            viewModel.deleteMany(requireContext().applicationContext as PixelLabApp, photos)
+            adapter.clearSelection()
+        }
+        binding.btnCancelSelection.setOnClickListener { adapter.clearSelection() }
 
         // repeatOnLifecycle：页面 STARTED 才收集 Flow，STOPPED 自动取消，
         // 避免"页面已销毁还在更新 UI"的经典内存泄漏

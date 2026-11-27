@@ -113,4 +113,24 @@ class Histogram {
             if (n == 0) 0f else sumB.toFloat() / n
         )
     }
+
+    /** RGB 三通道直方图结果：三条独立的 256 bin 计数 */
+    data class RgbStats(
+        val rBins: IntArray,
+        val gBins: IntArray,
+        val bBins: IntArray
+    )
+
+    /** RGB 分通道统计：单遍 O(N)，三个通道各计一个 256 bin 直方图 */
+    fun computeRgb(pixels: IntArray): RgbStats {
+        val r = IntArray(256)
+        val g = IntArray(256)
+        val b = IntArray(256)
+        for (p in pixels) {
+            r[p shr 16 and 0xFF]++
+            g[p shr 8 and 0xFF]++
+            b[p and 0xFF]++
+        }
+        return RgbStats(r, g, b)
+    }
 }

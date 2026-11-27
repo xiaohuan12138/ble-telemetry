@@ -186,4 +186,183 @@ class Convolver {
         }
         return out
     }
+
+    /**
+     * 直方图均衡化（Histogram Equalization）。
+     *
+     * 经典的点操作增强：把直方图 via 累积分布函数（CDF）重新映射到整个 0~255，
+     * 让"占用像素多的灰度段被拉开、占用少的被压缩"，整体对比度提升。
+     * 数学：y' = round((CDF(y) - CDFmin) / (N - CDFmin) * 255)
+     *
+     * 只对亮度（BT.601 Y）做均衡，RGB 通道按新旧亮度比同缩放——
+     * 直接对 R/G/B 各自均衡会产生色彩漂移（三通道 CDF 不同步）。
+     */
+    fun equalize(pixels: IntArray): IntArray {
+        val hist = IntArray(256)
+        for (p in pixels) {
+            val r = p shr 16 and 0xFF
+            val g = p shr 8 and 0xFF
+            val b = p and 0xFF
+            hist[((299 * r + 587 * g + 114 * b) / 1000).coerceIn(0, 255)]++
+        }
+        // CDF → 映射表。标准公式的 CDFmin = 第一个非零灰度级的 CDF 值（含该级计数），
+        // 这样最低灰度级映射到 0，分布才能真正铺满 0~255
+        val lut = IntArray(256)
+        var cdf = 0
+        var cdfMin = -1
+        val n = pixels.size
+        for (i in 0..255) {
+            if (hist[i] == 0) continue
+            cdf += hist[i]
+            if (cdfMin < 0) cdfMin = cdf
+            lut[i] = if (n - cdfMin <= 0) i
+            else ((cdf - cdfMin) * 255f / (n - cdfMin)).toInt().coerceIn(0, 255)
+        }
+        val out = IntArray(pixels.size)
+        for (i in pixels.indices) {
+            val p = pixels[i]
+            val r = p shr 16 and 0xFF
+            val g = p shr 8 and 0xFF
+            val b = p and 0xFF
+            val y = (299 * r + 587 * g + 114 * b) / 1000
+            val yNew = lut[y.coerceIn(0, 255)]
+            // RGB 同乘 yNew/y 保持色相：整数域放大 256 倍做定点除
+            val ratio = if (y == 0) 256 else (yNew * 256) / y
+            val r2 = ((r * ratio) shr 8).coerceIn(0, 255)
+            val g2 = ((g * ratio) shr 8).coerceIn(0, 255)
+            val b2 = ((b * ratio) shr 8).coerceIn(0, 255)
+            out[i] = (p and 0xFF000000.toInt()) or (r2 shl 16) or (g2 shl 8) or b2
+        }
+        return out
+    }
+
+    /**
+     * Otsu 自动二值化（大津法）。
+     *
+     * 遍历全部 256 个候选阈值 t，取"类间方差 σ²_b(t) = w0·w1·(μ0-μ1)²"最大的那个：
+     * 直观含义——前景和背景两个灰度群被分得最开、群内最紧的切分点。
+     * 复杂度 O(256 + N)，无需任何参数（对比固定阈值的全自动）。
+     */
+    fun otsuBinarize(pixels: IntArray): IntArray {
+        val hist = IntArray(256)
+        for (p in pixels) {
+            val r = p shr 16 and 0xFF
+            val g = p shr 8 and 0xFF
+            val b = p and 0xFF
+            hist[((299 * r + 587 * g + 114 * b) / 1000).coerceIn(0, 255)]++
+        }
+        val n = pixels.size
+        // 全局均值与累计量：一次前向扫描维护 w0/cum0，μ1 = (μT·N - cum0) / w1
+        var sumAll = 0L
+        for (i in 0..255) sumAll += hist[i].toLong() * i
+        var w0 = 0L
+        var sum0 = 0L
+        var bestT = 0
+        var bestVar = -1.0
+        for (t in 0..255) {
+            w0 += hist[t]
+            if (w0 == 0L) continue
+            val w1 = n - w0
+            if (w1 == 0L) break
+            sum0 += hist[t].toLong() * t
+            val mu0 = sum0.toDouble() / w0
+            val mu1 = (sumAll - sum0).toDouble() / w1
+            val wb = w0.toDouble() / n * w1.toDouble() / n
+            val between = wb * (mu0 - mu1) * (mu0 - mu1)
+            if (between > bestVar) { bestVar = between; bestT = t }
+        }
+        val out = IntArray(pixels.size)
+        for (i in pixels.indices) {
+            val p = pixels[i]
+            val r = p shr 16 and 0xFF
+            val g = p shr 8 and 0xFF
+            val b = p and 0xFF
+            val y = ((299 * r + 587 * g + 114 * b) / 1000).coerceIn(0, 255)
+            val v = if (y > bestT) 255 else 0
+            out[i] = (p and 0xFF000000.toInt()) or (v shl 16) or (v shl 8) or v
+        }
+        return out
+    }
+
+    /**
+     * 中值滤波（3×3）。
+     *
+     * 非线性滤波：邻域 9 个值排序取中位数，而不是加权平均。
+     * 对"椒盐噪声"（孤立的极亮/极暗点）几乎完美去除——中位数直接把离群值排掉；
+     * 而线性滤波（均值/高斯）会把噪声点摊开成一片灰斑。
+     * 9 个元素用插入排序取中位：n 极小，插入排序比快排常数更小。
+     */
+    fun medianFilter(pixels: IntArray, width: Int, height: Int): IntArray {
+        val out = IntArray(pixels.size)
+        // 三个通道的滑动窗口在行循环外预分配：整个滤波过程零临时对象
+        val vr = IntArray(9)
+        val vg = IntArray(9)
+        val vb = IntArray(9)
+        for (y in 0 until height) {
+            val yUp = (y - 1).coerceIn(0, height - 1)
+            val yDown = (y + 1).coerceIn(0, height - 1)
+            val rows = intArrayOf(yUp, y, yDown)   // 每行建一次，不进像素循环
+            for (x in 0 until width) {
+                val xLeft = (x - 1).coerceIn(0, width - 1)
+                val xRight = (x + 1).coerceIn(0, width - 1)
+                // 收集 3×3 邻域的 RGB 分量到各自窗口（9 邻居手工展开，零临时数组）
+                var idx = 0
+                for (yy in rows) {
+                    val row = yy * width
+                    vr[idx] = pixels[row + xLeft] shr 16 and 0xFF
+                    vg[idx] = pixels[row + xLeft] shr 8 and 0xFF
+                    vb[idx] = pixels[row + xLeft] and 0xFF
+                    idx++
+                    vr[idx] = pixels[row + x] shr 16 and 0xFF
+                    vg[idx] = pixels[row + x] shr 8 and 0xFF
+                    vb[idx] = pixels[row + x] and 0xFF
+                    idx++
+                    vr[idx] = pixels[row + xRight] shr 16 and 0xFF
+                    vg[idx] = pixels[row + xRight] shr 8 and 0xFF
+                    vb[idx] = pixels[row + xRight] and 0xFF
+                    idx++
+                }
+                sort9(vr); sort9(vg); sort9(vb)
+                val alpha = pixels[y * width + x] and 0xFF000000.toInt()
+                out[y * width + x] = alpha or (vr[4] shl 16) or (vg[4] shl 8) or vb[4]
+            }
+        }
+        return out
+    }
+
+    /** 9 元素插入排序（原地）。n 极小，插入排序比快排常数更小；中位即下标 4 */
+    private fun sort9(v: IntArray) {
+        for (i in 1..8) {
+            val key = v[i]
+            var j = i - 1
+            while (j >= 0 && v[j] > key) { v[j + 1] = v[j]; j-- }
+            v[j + 1] = key
+        }
+    }
+
+    /**
+     * 亮度 / 对比度：线性点操作 y = a·x + b（a 对比度增益，b 亮度偏移）。
+     *
+     * 用 256 项查找表（LUT）预计算映射，逐像素只查表不乘加——
+     * 点操作与位置无关（不像卷积要邻居），所以一张表全图复用。
+     * a=1、b=0 时是恒等映射，直接原样返回。
+     */
+    fun adjust(pixels: IntArray, brightness: Int, contrast: Int): IntArray {
+        if (brightness == 0 && contrast == 0) return pixels   // 恒等：零成本直通
+        // 对比度滑块 0~100 → 增益 0.5~1.5（50 即 ±50%）；亮度滑块 -100~100 直接做偏移
+        val a = 1f + contrast / 100f
+        val b = brightness
+        val lut = IntArray(256) { i ->
+            (a * (i - 128) + 128 + b).toInt().coerceIn(0, 255)   // 围绕中灰 128 缩放，避免整体漂移
+        }
+        val out = IntArray(pixels.size)
+        for (i in pixels.indices) {
+            val p = pixels[i]
+            val r = lut[p shr 16 and 0xFF]
+            val g = lut[p shr 8 and 0xFF]
+            val b2 = lut[p and 0xFF]
+            out[i] = (p and 0xFF000000.toInt()) or (r shl 16) or (g shl 8) or b2
+        }
+        return out
+    }
 }

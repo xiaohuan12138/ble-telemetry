@@ -183,4 +183,134 @@ class ConvolverTest {
         assertEquals(0.5f, stats.blowoutRatio, 0.001f)
         assertEquals(1f, stats.entropy, 0.01f)
     }
+
+    // ── 直方图均衡化 ──
+
+    @Test
+    fun `均衡化把双峰分布拉开到全灰度范围`() {
+        // 一半 100 一半 150 的双峰图：均衡后应铺满 0~255 两端
+        fun v(i: Int) = if (i % 2 == 0) 100 else 150
+        val hist = Histogram()
+        val src = IntArray(100) {
+            (-0x1000000) or (v(it) shl 16) or (v(it) shl 8) or v(it)
+        }
+
+        val out = convolver.equalize(src)
+        val after = hist.compute(out)
+        assertTrue("均衡后分布应拉宽，min=${after.minGray} max=${after.maxGray}",
+            after.minGray < 60 && after.maxGray > 190)
+        // 均衡是单调映射：原 100 组整体仍在原 150 组之下
+        val lo = out[0] and 0xFF
+        val hi = out[1] and 0xFF
+        assertTrue("低灰级应映射到更低，lo=$lo hi=$hi", lo < hi)
+    }
+
+    @Test
+    fun `均衡化对满分布图是恒等映射`() {
+        // 每个灰度级都恰好出现一次（256 像素）→ CDF 均匀，映射应近似恒等
+        val src = IntArray(256) { i ->
+            (-0x1000000) or (i shl 16) or (i shl 8) or i
+        }
+        val out = convolver.equalize(src)
+        for (i in 0 until 256) {
+            assertEquals(i, out[i] and 0xFF)
+        }
+    }
+
+    // ── Otsu 二值化 ──
+
+    @Test
+    fun `Otsu阈值落在两峰之间`() {
+        // 双峰 60 / 200，各 50 像素：最优阈值应在 60~200 之间，输出只有 0/255 两值
+        val src = IntArray(100) { i ->
+            val v = if (i < 50) 60 else 200
+            (-0x1000000) or (v shl 16) or (v shl 8) or v
+        }
+        val out = convolver.otsuBinarize(src)
+        val values = out.map { it and 0xFF }.distinct()
+        assertTrue("输出应只有两个灰度级，实际 $values",
+            values.all { it == 0 || it == 255 })
+        assertEquals("两类应各保留一半", 50, out.count { (it and 0xFF) == 255 })
+    }
+
+    @Test
+    fun `Otsu对单值图输出全黑或全白`() {
+        val out = convolver.otsuBinarize(grayImage(100))
+        // 全同值：阈值任意，输出稳定在单一灰度级
+        val values = out.map { it and 0xFF }.distinct()
+        assertEquals(1, values.size)
+    }
+
+    // ── 中值滤波 ──
+
+    @Test
+    fun `中值滤波完全去除椒盐噪声`() {
+        // 平坦 128 图上打两个孤点：盐点（全白）与椒点（全黑），中位数直接排掉离群值
+        val src = grayImage(128)
+        src[7] = -0x1                                   // 盐点：全白
+        src[17] = -0x1000000                            // 椒点：全黑
+        val out = convolver.medianFilter(src, 5, 5)
+        // 两个噪声点都不在角上，3×3 窗口内有 8 个 128 → 中位数 = 128
+        assertEquals(128, out[7] shr 8 and 0xFF)
+        assertEquals(128, out[17] shr 8 and 0xFF)
+    }
+
+    @Test
+    fun `中值滤波保持平坦区不变`() {
+        val out = convolver.medianFilter(grayImage(90), 5, 5)
+        for (p in out) assertEquals(90, p shr 8 and 0xFF)
+    }
+
+    // ── 亮度/对比度 LUT ──
+
+    @Test
+    fun `亮度对比度恒等时直通`() {
+        val src = grayImage(128)
+        // adjust 在恒等映射时返回原数组（同一引用），零成本
+        assertTrue(convolver.adjust(src, 0, 0) === src)
+    }
+
+    @Test
+    fun `亮度加50全部像素提升50且不越界`() {
+        val out = convolver.adjust(grayImage(100), brightness = 50, contrast = 0)
+        assertEquals(150, out[0] shr 8 and 0xFF)
+        val bright = convolver.adjust(grayImage(240), brightness = 50, contrast = 0)
+        assertEquals("越界应 clamp 到 255", 255, bright[0] shr 8 and 0xFF)
+    }
+
+    @Test
+    fun `对比度围绕中灰缩放`() {
+        // contrast=100 → 增益 2.0：100 → 2·(100-128)+128 = 72；160 → 2·32+128 = 192
+        val up = convolver.adjust(grayImage(160), brightness = 0, contrast = 100)
+        assertEquals(192, up[0] shr 8 and 0xFF)
+        val down = convolver.adjust(grayImage(100), brightness = 0, contrast = 100)
+        assertEquals(72, down[0] shr 8 and 0xFF)
+        // 中灰 128 是不动点
+        val mid = convolver.adjust(grayImage(128), brightness = 0, contrast = 100)
+        assertEquals(128, mid[0] shr 8 and 0xFF)
+    }
+
+    // ── RGB 分通道直方图 ──
+
+    @Test
+    fun `RGB分通道统计_纯色图各通道计数`() {
+        val hist = Histogram()
+        val red = (-0x1000000) or (200 shl 16)
+        val rgb = hist.computeRgb(arrayOf(red, red, red).toIntArray())
+        assertEquals(3, rgb.rBins[200])
+        assertEquals(3, rgb.gBins[0])
+        assertEquals(3, rgb.bBins[0])
+    }
+
+    @Test
+    fun `RGB分通道计数总和等于像素数`() {
+        val hist = Histogram()
+        val src = IntArray(50) {
+            (-0x1000000) or ((it % 256) shl 16) or ((it % 128) shl 8) or (it % 64)
+        }
+        val rgb = hist.computeRgb(src)
+        assertEquals(50, rgb.rBins.sum())
+        assertEquals(50, rgb.gBins.sum())
+        assertEquals(50, rgb.bBins.sum())
+    }
 }
